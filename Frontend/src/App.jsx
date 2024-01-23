@@ -1,11 +1,12 @@
 import './App.css'
-import { Home } from './pages'
+import { Home, Landing } from './pages'
 
 function App() {
 
   return (
     <>
-      <Home/>
+      {/* <Home/> */}
+      <Landing/>
     </>
   )
 }

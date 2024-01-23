@@ -6,10 +6,11 @@ const Home = () => {
 
     const webcamRef = useRef(null)
 
-    const startStream = () => {
+    const startStream = async () => {
 
-        // const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        console.log(webcamRef.current)
+        const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        // console.log(webcamRef.current)
+        console.log(videoStream)
 
     }
 
