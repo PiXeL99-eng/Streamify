@@ -6,7 +6,7 @@ const Landing = () => {
     return (
         <>
             <Box height={"100vh"} w={"100vw"} background={"red"} margin={"0"} padding={"0"}>
-                <Navbar></Navbar>
+                <Navbar />
             </Box>
         </>
     )
