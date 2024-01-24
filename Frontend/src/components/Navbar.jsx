@@ -7,7 +7,7 @@ import { DashboardImage, Exitmage } from "../assets"
 const Navbar = () => {
     return (
         <>
-            <Box width={"100vw"} background={"#252630"} color={"white"}>
+            <Box width={"100vw"} background={"#252630"} color={"white"} height={"9%"}>
 
                 <HStack height={"16"} alignContent={"center"} justifyItems={"center"} justifyContent={"space-between"}>
 

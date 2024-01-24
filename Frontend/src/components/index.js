@@ -1,7 +1,13 @@
 import VideoCam from "./VideoCam";
 import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
+import Midbox from "./Midbox";
+import StreamChat from "./StreamChat";
 
 export {
     VideoCam,
-    Navbar
+    Navbar,
+    Sidebar,
+    Midbox,
+    StreamChat
 }
