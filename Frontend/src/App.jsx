@@ -1,12 +1,17 @@
 import './App.css'
-import { Home, Landing } from './pages'
+import { Test, Home, Signin, Signup } from './pages'
+import Routes from "./routes";
 
 function App() {
 
   return (
     <>
+      {/* <Test/> */}
       {/* <Home/> */}
-      <Landing/>
+      {/* <Signup/> */}
+      {/* <Signin/> */}
+
+      <Routes />
     </>
   )
 }

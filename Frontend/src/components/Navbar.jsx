@@ -2,6 +2,7 @@ import React from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar } from '@chakra-ui/react'
 import { SearchIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
+import { UserButton } from '@clerk/clerk-react'
 
 
 const Navbar = () => {
@@ -91,7 +92,8 @@ const RightCornerNavbar = () => {
                         />
                         <Text fontSize='md'>Exit</Text> */}
                     </HStack>
-                    <Avatar boxSize={"9"} name='Kola Tioluwani' src='https://bit.ly/tioluwani-kolawole' />
+                    <UserButton afterSignOutUrl='/signin' />
+                    {/* <Avatar boxSize={"9"} name='Kola Tioluwani' src='https://bit.ly/tioluwani-kolawole' /> */}
                 </HStack>
             </Box>
         </>
