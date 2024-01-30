@@ -22229,8 +22229,8 @@ const createSendTransport = () => {
         // The server sends back params needed 
         // to create Send Transport on the client side
         if (params.error) {
-        console.log(params.error)
-        return
+            console.log(params.error)
+            return
         }
 
         console.log(params)
@@ -22244,41 +22244,41 @@ const createSendTransport = () => {
         // this event is raised when a first call to transport.produce() is made
         // see connectSendTransport() below
         producerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-        try {
-            // Signal local DTLS parameters to the server side transport
-            // see server's socket.on('transport-connect', ...)
-            await socket.emit('transport-connect', {
-            dtlsParameters,
-            })
+            try {
+                // Signal local DTLS parameters to the server side transport
+                // see server's socket.on('transport-connect', ...)
+                await socket.emit('transport-connect', {
+                    dtlsParameters,
+                })
 
-            // Tell the transport that parameters were transmitted.
-            callback()
+                // Tell the transport that parameters were transmitted.
+                callback()
 
-        } catch (error) {
-            errback(error)
-        }
+            } catch (error) {
+                errback(error)
+            }
         })
 
         producerTransport.on('produce', async (parameters, callback, errback) => {
-        console.log(parameters)
+            console.log(parameters)
 
-        try {
-            // tell the server to create a Producer
-            // with the following parameters and produce
-            // and expect back a server side producer id
-            // see server's socket.on('transport-produce', ...)
-            await socket.emit('transport-produce', {
-            kind: parameters.kind,
-            rtpParameters: parameters.rtpParameters,
-            appData: parameters.appData,
-            }, ({ id }) => {
-            // Tell the transport that parameters were transmitted and provide it with the
-            // server side producer's id.
-            callback({ id })
-            })
-        } catch (error) {
-            errback(error)
-        }
+            try {
+                // tell the server to create a Producer
+                // with the following parameters and produce
+                // and expect back a server side producer id
+                // see server's socket.on('transport-produce', ...)
+                await socket.emit('transport-produce', {
+                    kind: parameters.kind,
+                    rtpParameters: parameters.rtpParameters,
+                    appData: parameters.appData,
+                    }, ({ id }) => {
+                    // Tell the transport that parameters were transmitted and provide it with the
+                    // server side producer's id.
+                    callback({ id })
+                })
+            } catch (error) {
+                errback(error)
+            }
         })
 
         connectSendTransport()
@@ -22294,16 +22294,14 @@ const connectSendTransport = async () => {
 
     producer.on('trackended', () => {
         console.log('track ended')
-
         // close video track
     })
 
     producer.on('transportclose', () => {
         console.log('transport ended')
-
         // close video track
     })
-    }
+}
 
 const generateRoomId = () => {
     const randomId = Math.random().toString(36).substring(7);
@@ -22317,16 +22315,6 @@ const startStream = async () => {
     try {
     // Get user media (webcam)
     getLocalStream()
-
-    // Create a video element for local stream
-    const localVideo = document.createElement('video');
-    localVideo.srcObject = localStream;
-    localVideo.autoplay = true;
-
-    // Append the video element to the container
-    const localVideoContainer = document.getElementById('localVideoContainer');
-    localVideoContainer.innerHTML = ''; // Clear previous content
-    localVideoContainer.appendChild(localVideo);
 
     // Send the roomId to the server
     // socket.emit('startStream', { roomId });

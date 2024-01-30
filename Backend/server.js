@@ -4,6 +4,7 @@ const mediasoup = require('mediasoup')
 const path = require('path');
 const http = require('http');
 const config = require('./config/appConfig')
+const Room = require('./lib/Room')
 const app = express()
 
 app.use('/webrtc', express.static(path.join(__dirname, 'public')))
@@ -17,11 +18,8 @@ app.get('/', (req, res) => {
     res.send('mediasoup app!')
 })
 
-server.listen(3000, () => {
-    console.log('listening on port: ' + 3000)
-})
-
-const workers = new Map()
+const workers = []
+const rooms = new Map()
 
 const createWorkers = async () => {
   const {numWorkers, rtcMinPort, rtcMaxPort} = config.mediaSoup;
@@ -32,7 +30,7 @@ const createWorkers = async () => {
       rtcMaxPort: rtcMaxPort,
     })
     console.log(`worker pid ${worker.pid}`)
-    workers.set(worker.pid, worker)
+    workers.push(worker)
 
     worker.on('died', error => {
       console.error('mediasoup worker has died')
@@ -51,8 +49,12 @@ const peers = io.of('/live-video')
 
 peers.on('connection', async socket => {
   console.log(socket.id)
-  socket.emit('connection-success', {
-    socketId: socket.id
+
+  socket.on('startStream', async (roomId) => {
+    //socket.join(roomId);
+    socket.roomId = roomId;
+    const room = await Room.create(roomId,workers,socket.id)
+    rooms.set(roomId,room);
   })
 
   socket.on('disconnect', () => {
@@ -60,42 +62,23 @@ peers.on('connection', async socket => {
     console.log('peer disconnected')
   })
 
-  socket.on('createRoom', async (callback) => {
-    if (router === undefined) {
-      // worker.createRouter(options)
-      // options = { mediaCodecs, appData }
-      // mediaCodecs -> defined above
-      // appData -> custom application data - we are not supplying any
-      // none of the two are required
-      router = await worker.createRouter({ mediaCodecs, })
-      console.log(`Router ID: ${router.id}`)
-    }
-
-    getRtpCapabilities(callback)
+  socket.on('getRtpCaps', async (callback) => {
+    const room = rooms.get(socket.roomId);
+    const rtpCapabilities = room.getRtpCapabilities(socket.id)
+    callback({rtpCapabilities});
   })
-
-  const getRtpCapabilities = (callback) => {
-    const rtpCapabilities = router.rtpCapabilities
-
-    callback({ rtpCapabilities })
-  }
 
   // Client emits a request to create server side Transport
   // We need to differentiate between the producer and consumer transports
   socket.on('createWebRtcTransport', async ({ sender }, callback) => {
-    console.log(`Is this a sender request? ${sender}`)
-    // The client indicates if it is a producer or a consumer
-    // if sender is true, indicates a producer else a consumer
-    if (sender)
-      producerTransport = await createWebRtcTransport(callback)
-    else
-      consumerTransport = await createWebRtcTransport(callback)
+    const room = rooms.get(socket.roomId);
+    await room.createTransport(socket.id, callback);
   })
 
   // see client's socket.emit('transport-connect', ...)
   socket.on('transport-connect', async ({ dtlsParameters }) => {
     console.log('DTLS PARAMS... ', { dtlsParameters })
-    await producerTransport.connect({ dtlsParameters })
+    await rooms.get(socket.roomId).transportConnect(socket.id, { dtlsParameters })
   })
 
   // see client's socket.emit('transport-produce', ...)
@@ -173,52 +156,3 @@ peers.on('connection', async socket => {
     await consumer.resume()
   })
 })
-
-const createWebRtcTransport = async (callback) => {
-  try {
-    // https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
-    const webRtcTransport_options = {
-      listenIps: [
-        { ip: '0.0.0.0', announcedIp: '127.0.0.1' }
-      ],
-      enableUdp: true,
-      enableTcp: true,
-      preferUdp: true,
-    }
-
-    // https://mediasoup.org/documentation/v3/mediasoup/api/#router-createWebRtcTransport
-    let transport = await router.createWebRtcTransport(webRtcTransport_options)
-    console.log(`transport id: ${transport.id}`)
-
-    transport.on('dtlsstatechange', dtlsState => {
-      if (dtlsState === 'closed') {
-        transport.close()
-      }
-    })
-
-    transport.on('close', () => {
-      console.log('transport closed')
-    })
-
-    // send back to the client the following prameters
-    callback({
-      // https://mediasoup.org/documentation/v3/mediasoup-client/api/#TransportOptions
-      params: {
-        id: transport.id,
-        iceParameters: transport.iceParameters,
-        iceCandidates: transport.iceCandidates,
-        dtlsParameters: transport.dtlsParameters,
-      }
-    })
-
-    return transport
-
-  } catch (error) {
-    console.log(error)
-    callback({
-      params: {
-        error: error
-      }
-    })
-  }
-}
