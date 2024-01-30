@@ -1,57 +1,112 @@
 const io = require('socket.io-client')
 const mediasoupClient = require('mediasoup-client')
 
-// const socket = io("/live-video")
-
 const generateRoomId = () => {
     return document.getElementById('roomIdInput').value;
 };
 
-const consumeStream = async () => {
+let device
+let rtpCapabilities
+let socket
+let consumerTransport
+let consumer
+
+const getRtpCapabilities = () => {
+
+    socket.emit('getRtpCaps', (data) => {
+        rtpCapabilities = data.rtpCapabilities
+        createDevice()
+    })
+}
+
+const createDevice = async () => {
+    try {
+        device = new mediasoupClient.Device()
+        // Loads the device with RTP capabilities of the Router (server side)
+        await device.load({
+            routerRtpCapabilities: rtpCapabilities
+        })
+
+        // once the device loads, create transport
+        createRecvTransport()
+
+    } catch (error) {
+        console.log(error)
+        if (error.name === 'UnsupportedError')
+        console.warn('browser not supported')
+    }
+}
+
+const createRecvTransport = async () => {
+    
+    await socket.emit('createWebRtcTransport', { sender: false }, ({ params }) => {
+        if (params.error) {
+            console.log(params.error)
+        return
+        }
+
+        // creates a new WebRTC Transport to receive media
+        // based on server's consumer transport params
+        consumerTransport = device.createRecvTransport(params)
+        consumerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+            try {
+                // Signal local DTLS parameters to the server side transport
+                await socket.emit('transport-connect', {
+                    dtlsParameters,
+                })
+                // Tell the transport that parameters were transmitted.
+                callback()
+
+            } catch (error) {
+                // Tell the transport that something was wrong
+                errback(error)
+            }
+        })
+        connectRecvTransport()
+    })
+}
+
+const connectRecvTransport = async () => {
+
+    await socket.emit('consume', { rtpCapabilities: device.rtpCapabilities, }, async ({ params }) => {
+        if (params.error) {
+            console.log('Cannot Consume')
+            return
+        }
+       
+        consumer = await consumerTransport.consume({
+            id: params.id,
+            producerId: params.producerId,
+            kind: params.kind,
+            rtpParameters: params.rtpParameters
+        })
+        // destructure and retrieve the video track from the producer
+        const { track } = consumer
+        remoteVideo.srcObject = new MediaStream([track])
+
+        // the server consumer started with media paused
+        // so we need to inform the server to resume
+        socket.emit('consumer-resume')
+    })
+}
+
+const consumeStream = () => {
     const roomId = generateRoomId();
+    socket = io("/live-video")
 
     try {
-    // // Request RTP capabilities from the server
-    // const { rtpCapabilities } = await new Promise(resolve =>
-    //     socket.emit('getRtpCapabilities', resolve)
-    // );
+        socket.emit("JoinRoom",roomId, () => {
+            getRtpCapabilities()
+        });
 
-    // // Create a consumer transport
-    // consumerTransport = await new Promise(resolve =>
-    //     socket.emit('createWebRtcTransport', { sender: false }, resolve)
-    // );
-
-    // // Connect consumer transport
-    // await socket.emit('transport-recv-connect', {
-    //     dtlsParameters: consumerTransport.dtlsParameters,
-    // });
-
-    // // Consume the stream
-    // consumer = await new Promise((resolve, reject) => {
-    //     socket.emit('consume', { rtpCapabilities }, async ({ params }) => {
-    //     if (params.error) {
-    //         reject(new Error(params.error));
-    //         return;
-    //     }
-
-    //     const newConsumer = await consumerTransport.consume(params);
-    //     resolve(newConsumer);
-    //     });
-    // });
-
-    // Display the remote stream in a video element
-    const remoteVideo = document.createElement('video');
-    remoteVideo.srcObject = new MediaStream([]);
-    remoteVideo.autoplay = true;
-
-    // Append the video element to the container
-    const remoteVideoContainer = document.getElementById('remoteVideoContainer');
-    remoteVideoContainer.innerHTML = ''; // Clear previous content
-    remoteVideoContainer.appendChild(remoteVideo);
-
-    console.log(`Consuming stream in room: ${roomId}`);
+        socket.on("producer-closed", () => {
+            consumerTransport.close();
+            consumer.close();
+            remoteVideo.srcObject = new MediaStream();
+        })
+        console.log(`Consuming stream in room: ${roomId}`);
     } catch (error) {
-    console.error('Error consuming stream:', error);
+        console.error('Error consuming stream:', error);
     }
 };
 

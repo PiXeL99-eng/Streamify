@@ -2,8 +2,10 @@ const io = require('socket.io-client')
 const mediasoupClient = require('mediasoup-client')
 
 const socket = io("/live-video")
+
 let device
 let rtpCapabilities
+let producerTransport
 
 let params = {
     // mediasoup params
@@ -67,9 +69,6 @@ const createDevice = async () => {
         await device.load({
             routerRtpCapabilities: rtpCapabilities
         })
-
-        console.log('Device RTP Capabilities', device.rtpCapabilities)
-
         // once the device loads, create transport
         createSendTransport()
 
@@ -82,8 +81,7 @@ const createDevice = async () => {
 
 const getRtpCapabilities = () => {
 
-    socket.emit('createRoom', (data) => {
-        console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`)
+    socket.emit('getRtpCaps', (data) => {
         rtpCapabilities = data.rtpCapabilities
         createDevice()
     })
@@ -97,11 +95,9 @@ const createSendTransport = () => {
             console.log(params.error)
             return
         }
-        console.log(params)
-
         // creates a new WebRTC Transport to send media
         // based on the server's producer transport params
-        const producerTransport = device.createSendTransport(params)
+        producerTransport = device.createSendTransport(params)
         producerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
             try {
                 // Signal local DTLS parameters to the server side transport
@@ -117,7 +113,6 @@ const createSendTransport = () => {
         })
 
         producerTransport.on('produce', async (parameters, callback, errback) => {
-            console.log(parameters)
 
             try {
                 // Tell the server to create a Producer with the following parameters and produce
@@ -154,7 +149,7 @@ const connectSendTransport = async () => {
 
 const generateRoomId = () => {
     const randomId = Math.random().toString(36).substring(7);
-    return `room_${randomId}`;
+    return randomId;
 };
 
 const startStream = async () => {
@@ -162,10 +157,10 @@ const startStream = async () => {
 
     try {
         // Send the roomId to the server
-        socket.emit('startStream', { roomId });
-
-        // Get user media (webcam)
-        getLocalStream()
+        socket.emit('startStream', roomId, () => {
+           // Get user media (webcam)
+            getLocalStream() 
+        });
 
         console.log(`Streaming started in room: ${roomId}`);
     } catch (error) {

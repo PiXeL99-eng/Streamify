@@ -9,10 +9,10 @@
   },
   "scripts": {
     "start": "nodemon server.js",
-    "watch:app": "browserify public/app.js -o public/bundles/bundle.js -v",
-    "watch:pub": "browserify public/publisher.js -o public/bundles/bundle1.js -v",
-    "watch:sub": "browserify public/consumer.js -o public/bundles/bundle2.js -v",
-    "watch:all": "npm run watch:app && npm run watch:pub && npm run watch:sub"
+    "watch:app": "browserify public/app.js -o public/bundle.js -v",
+    "watch:pub": "browserify public/publisher.js -o public/bundle1.js -v",
+    "watch:sub": "browserify public/consumer.js -o public/bundle2.js -v",
+    "watch:all": "npm run watch:pub && npm run watch:sub"
   },
   "name": "backend",
   "description": "Backend service",
