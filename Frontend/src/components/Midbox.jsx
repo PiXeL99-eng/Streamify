@@ -8,11 +8,11 @@ const Midbox = () => {
         <>
             <Box width={"60%"} background={"#121212"} color={"white"} height={"100%"}>
 
-                <VStack>
+                <VStack width={"100%"} height={"100%"} spacing={"0"}>
 
                     <VideoBox />
 
-                    <Dummy/>
+                    <Dummy />
 
                 </VStack>
 
@@ -25,7 +25,10 @@ const Midbox = () => {
 const VideoBox = () => {
     return (
         <>
-          Box
+
+            <Box width={"100%"} background={"#454a4a"} height={"30rem"}>
+                videobox
+            </Box>
         </>
     )
 }
@@ -33,7 +36,9 @@ const VideoBox = () => {
 const Dummy = () => {
     return (
         <>
-        Dummy
+            <Box width={"100%"} background={"#234d3b"}>
+                dummy
+            </Box>
         </>
     )
 }

@@ -1,28 +1,22 @@
-import React, {useRef} from 'react'
-import { VideoCam } from '../components'
-import { Container, Box, Button } from '@chakra-ui/react'
+import React from 'react'
+import { Container, Box, Button, HStack } from '@chakra-ui/react'
+import { Navbar, Sidebar, Midbox, StreamChat } from '../components'
 
 const Home = () => {
-
-    const webcamRef = useRef(null)
-
-    const startStream = async () => {
-
-        const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        // console.log(webcamRef.current)
-        console.log(videoStream)
-
-    }
-
     return (
         <>
-            <Container height={"100vh"} bg='grey'>
-                <Box marginY={"auto"} paddingY={"5"}>
-                    <VideoCam webcamRef={webcamRef}/>
-                </Box>
+            <Box height={"100vh"} w={"100vw"} background={"#181920"} margin={"0"} padding={"0"}>
+                <Navbar />
+                < Box width={"100vw"} background={"#181920"} color={"white"} height={"91%"} >
+                    <HStack height={"100%"} spacing={"0"}>
 
-                <Button colorScheme='blue' onClick={startStream}>Stream</Button>
-            </Container>
+                        <Sidebar />
+                        <Midbox />
+                        <StreamChat />
+
+                    </HStack>
+                </Box>
+            </Box>
         </>
     )
 }
