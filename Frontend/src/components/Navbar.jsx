@@ -1,13 +1,13 @@
 import React from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar } from '@chakra-ui/react'
 import { SearchIcon } from '@chakra-ui/icons'
-import { DashboardImage } from "../assets"
+import { DashboardImage, Exitmage } from "../assets"
 
 
 const Navbar = () => {
     return (
         <>
-            <Box width={"100vw"} background={"#252630"} color={"white"}>
+            <Box width={"100vw"} background={"#252630"} color={"white"} height={"9%"}>
 
                 <HStack height={"16"} alignContent={"center"} justifyItems={"center"} justifyContent={"space-between"}>
 
@@ -80,11 +80,16 @@ const RightCornerNavbar = () => {
                         <Image
                             boxSize='22px'
                             src={DashboardImage}
-                            alt='Dan Abramov'
+                            alt='Dashboard-Image'
                         />
                         <Text fontSize='md'>Dashboard</Text>
-                        {/* OR  */}
-                        {/* <Text fontSize={"12px"}>Creator Dashboard</Text>       */}
+                        {/* OR */}
+                        {/* <Image
+                            boxSize='22px'
+                            src={Exitmage}
+                            alt='Exit-Image'
+                        />
+                        <Text fontSize='md'>Exit</Text> */}
                     </HStack>
                     <Avatar boxSize={"9"} name='Kola Tioluwani' src='https://bit.ly/tioluwani-kolawole' />
                 </HStack>
