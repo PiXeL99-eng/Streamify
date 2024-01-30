@@ -90,7 +90,7 @@ peers.on('connection', async socket => {
     callback({rtpCapabilities});
   })
 
-  socket.on('createWebRtcTransport', async ({ sender }, callback) => {
+  socket.on('createWebRtcTransport', async (callback) => {
     const room = rooms.get(socket.roomId);
     await room.createTransport(socket.id, callback);
   })

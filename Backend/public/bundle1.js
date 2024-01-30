@@ -22207,7 +22207,7 @@ const getRtpCapabilities = () => {
 
 const createSendTransport = () => {
    
-    socket.emit('createWebRtcTransport', { sender: true }, ({ params }) => {
+    socket.emit('createWebRtcTransport',({ params }) => {
         
         if (params.error) {
             console.log(params.error)

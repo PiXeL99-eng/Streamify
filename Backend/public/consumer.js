@@ -39,7 +39,7 @@ const createDevice = async () => {
 
 const createRecvTransport = async () => {
     
-    await socket.emit('createWebRtcTransport', { sender: false }, ({ params }) => {
+    await socket.emit('createWebRtcTransport', ({ params }) => {
         if (params.error) {
             console.log(params.error)
         return
