@@ -14,10 +14,6 @@ app.use(express.urlencoded({ extended: true }));
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.get('/', (req, res) => {
-    res.send('mediasoup app!')
-})
-
 app.get('/stream', (req, res) => {
   res.sendFile(path.join(__dirname,"/public/stream.html"))
 })

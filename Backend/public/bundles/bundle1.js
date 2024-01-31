@@ -2704,6 +2704,179 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],6:[function(require,module,exports){
+const io = require('socket.io-client')
+const mediasoupClient = require('mediasoup-client')
+
+const socket = io("/live-video")
+
+let device
+let rtpCapabilities
+let producerTransport
+
+let params = {
+    // mediasoup params
+    encodings: [
+      {
+        rid: 'r0',
+        maxBitrate: 100000,
+        scalabilityMode: 'S1T3',
+      },
+      {
+        rid: 'r1',
+        maxBitrate: 300000,
+        scalabilityMode: 'S1T3',
+      },
+      {
+        rid: 'r2',
+        maxBitrate: 900000,
+        scalabilityMode: 'S1T3',
+      },
+    ],
+    codecOptions: {
+      videoGoogleStartBitrate: 1000
+    }
+}
+
+const streamSuccess = (stream) => {
+    localVideo.srcObject = stream
+    const track = stream.getVideoTracks()[0]
+    params = {
+      track,
+      ...params
+    }
+  
+    getRtpCapabilities()
+  }
+  
+const getLocalStream = () => {
+    navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+        width: {
+            min: 640,
+            max: 1920,
+        },
+        height: {
+            min: 400,
+            max: 1080,
+        }
+        }
+    })
+    .then(streamSuccess)
+    .catch(error => {
+        console.log(error.message)
+    })
+}
+
+const createDevice = async () => {
+    try {
+        device = new mediasoupClient.Device()
+        // Loads the device with RTP capabilities of the Router (server side)
+        await device.load({
+            routerRtpCapabilities: rtpCapabilities
+        })
+        // once the device loads, create transport
+        createSendTransport()
+
+    } catch (error) {
+        console.log(error)
+        if (error.name === 'UnsupportedError')
+        console.warn('browser not supported')
+    }
+}
+
+const getRtpCapabilities = () => {
+
+    socket.emit('getRtpCaps', (data) => {
+        rtpCapabilities = data.rtpCapabilities
+        createDevice()
+    })
+}
+
+const createSendTransport = () => {
+   
+    socket.emit('createWebRtcTransport',({ params }) => {
+        
+        if (params.error) {
+            console.log(params.error)
+            return
+        }
+        // creates a new WebRTC Transport to send media
+        // based on the server's producer transport params
+        producerTransport = device.createSendTransport(params)
+        producerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+            try {
+                // Signal local DTLS parameters to the server side transport
+                await socket.emit('transport-connect', {
+                    dtlsParameters,
+                })
+
+                // Tell the transport that parameters were transmitted.
+                callback()
+            } catch (error) {
+                errback(error)
+            }
+        })
+
+        producerTransport.on('produce', async (parameters, callback, errback) => {
+
+            try {
+                // Tell the server to create a Producer with the following parameters and produce
+                await socket.emit('transport-produce', {
+                    kind: parameters.kind,
+                    rtpParameters: parameters.rtpParameters,
+                    appData: parameters.appData,
+                    }, ({ id }) => {
+                    // Tell the transport that parameters were transmitted.
+                    callback({ id })
+                })
+            } catch (error) {
+                errback(error)
+            }
+        })
+
+        connectSendTransport()
+    })
+}
+
+const connectSendTransport = async () => {
+    const producer = await producerTransport.produce(params)
+
+    producer.on('trackended', () => {
+        console.log('track ended')
+        // close video track
+    })
+
+    producer.on('transportclose', () => {
+        console.log('transport ended')
+        // close transport
+    })
+}
+
+const generateRoomId = () => {
+    const randomId = Math.random().toString(36).substring(7);
+    return randomId;
+};
+
+const startStream = async () => {
+    const roomId = generateRoomId();
+
+    try {
+        // Send the roomId to the server
+        socket.emit('startStream', roomId, () => {
+           // Get user media (webcam)
+            getLocalStream() 
+        });
+
+        console.log(`Streaming started in room: ${roomId}`);
+    } catch (error) {
+        console.error('Error accessing webcam:', error);
+    }
+};
+
+document.getElementById('startStreamBtn').addEventListener('click', startStream);
+
+},{"mediasoup-client":64,"socket.io-client":76}],7:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -2881,7 +3054,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Logger = void 0;
@@ -2917,7 +3090,7 @@ class Logger {
 }
 exports.Logger = Logger;
 
-},{"debug":9}],8:[function(require,module,exports){
+},{"debug":10}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AwaitQueue = exports.AwaitQueueRemovedTaskError = exports.AwaitQueueStoppedError = void 0;
@@ -3101,7 +3274,7 @@ class AwaitQueue {
 }
 exports.AwaitQueue = AwaitQueue;
 
-},{"./Logger":7}],9:[function(require,module,exports){
+},{"./Logger":8}],10:[function(require,module,exports){
 (function (process){(function (){
 /* eslint-env browser */
 
@@ -3374,7 +3547,7 @@ formatters.j = function (v) {
 };
 
 }).call(this)}).call(this,require('_process'))
-},{"./common":10,"_process":5}],10:[function(require,module,exports){
+},{"./common":11,"_process":5}],11:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3650,7 +3823,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":68}],11:[function(require,module,exports){
+},{"ms":69}],12:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasCORS = void 0;
@@ -3666,7 +3839,7 @@ catch (err) {
 }
 exports.hasCORS = value;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 // imported from https://github.com/galkn/querystring
 /**
@@ -3707,7 +3880,7 @@ function decode(qs) {
 }
 exports.decode = decode;
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parse = void 0;
@@ -3777,7 +3950,7 @@ function queryKey(uri, query) {
     return data;
 }
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // imported from https://github.com/unshiftio/yeast
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3834,7 +4007,7 @@ exports.yeast = yeast;
 for (; i < length; i++)
     map[alphabet[i]] = i;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.globalThisShim = void 0;
@@ -3850,7 +4023,7 @@ exports.globalThisShim = (() => {
     }
 })();
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.nextTick = exports.parse = exports.installTimerFunctions = exports.transports = exports.TransportError = exports.Transport = exports.protocol = exports.Socket = void 0;
@@ -3869,7 +4042,7 @@ Object.defineProperty(exports, "parse", { enumerable: true, get: function () { r
 var websocket_constructor_js_1 = require("./transports/websocket-constructor.js");
 Object.defineProperty(exports, "nextTick", { enumerable: true, get: function () { return websocket_constructor_js_1.nextTick; } });
 
-},{"./contrib/parseuri.js":13,"./socket.js":17,"./transport.js":18,"./transports/index.js":19,"./transports/websocket-constructor.js":21,"./util.js":25}],17:[function(require,module,exports){
+},{"./contrib/parseuri.js":14,"./socket.js":18,"./transport.js":19,"./transports/index.js":20,"./transports/websocket-constructor.js":22,"./util.js":26}],18:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -4497,7 +4670,7 @@ class Socket extends component_emitter_1.Emitter {
 exports.Socket = Socket;
 Socket.protocol = engine_io_parser_1.protocol;
 
-},{"./contrib/parseqs.js":12,"./contrib/parseuri.js":13,"./transports/index.js":19,"./transports/websocket-constructor.js":21,"./util.js":25,"@socket.io/component-emitter":6,"debug":9,"engine.io-parser":30}],18:[function(require,module,exports){
+},{"./contrib/parseqs.js":13,"./contrib/parseuri.js":14,"./transports/index.js":20,"./transports/websocket-constructor.js":22,"./util.js":26,"@socket.io/component-emitter":7,"debug":10,"engine.io-parser":31}],19:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -4651,7 +4824,7 @@ class Transport extends component_emitter_1.Emitter {
 }
 exports.Transport = Transport;
 
-},{"./contrib/parseqs.js":12,"./util.js":25,"@socket.io/component-emitter":6,"debug":9,"engine.io-parser":30}],19:[function(require,module,exports){
+},{"./contrib/parseqs.js":13,"./util.js":26,"@socket.io/component-emitter":7,"debug":10,"engine.io-parser":31}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transports = void 0;
@@ -4664,7 +4837,7 @@ exports.transports = {
     polling: polling_js_1.Polling,
 };
 
-},{"./polling.js":20,"./websocket.js":22,"./webtransport.js":23}],20:[function(require,module,exports){
+},{"./polling.js":21,"./websocket.js":23,"./webtransport.js":24}],21:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -5080,7 +5253,7 @@ function unloadHandler() {
     }
 }
 
-},{"../contrib/yeast.js":14,"../globalThis.js":15,"../transport.js":18,"../util.js":25,"./xmlhttprequest.js":24,"@socket.io/component-emitter":6,"debug":9,"engine.io-parser":30}],21:[function(require,module,exports){
+},{"../contrib/yeast.js":15,"../globalThis.js":16,"../transport.js":19,"../util.js":26,"./xmlhttprequest.js":25,"@socket.io/component-emitter":7,"debug":10,"engine.io-parser":31}],22:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defaultBinaryType = exports.usingBrowserWebSocket = exports.WebSocket = exports.nextTick = void 0;
@@ -5098,7 +5271,7 @@ exports.WebSocket = globalThis_js_1.globalThisShim.WebSocket || globalThis_js_1.
 exports.usingBrowserWebSocket = true;
 exports.defaultBinaryType = "arraybuffer";
 
-},{"../globalThis.js":15}],22:[function(require,module,exports){
+},{"../globalThis.js":16}],23:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -5264,7 +5437,7 @@ class WS extends transport_js_1.Transport {
 exports.WS = WS;
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../contrib/yeast.js":14,"../transport.js":18,"../util.js":25,"./websocket-constructor.js":21,"buffer":2,"debug":9,"engine.io-parser":30}],23:[function(require,module,exports){
+},{"../contrib/yeast.js":15,"../transport.js":19,"../util.js":26,"./websocket-constructor.js":22,"buffer":2,"debug":10,"engine.io-parser":31}],24:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -5351,7 +5524,7 @@ class WT extends transport_js_1.Transport {
 }
 exports.WT = WT;
 
-},{"../transport.js":18,"./websocket-constructor.js":21,"debug":9,"engine.io-parser":30}],24:[function(require,module,exports){
+},{"../transport.js":19,"./websocket-constructor.js":22,"debug":10,"engine.io-parser":31}],25:[function(require,module,exports){
 "use strict";
 // browser shim for xmlhttprequest module
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -5378,7 +5551,7 @@ exports.XHR = XHR;
 function createCookieJar() { }
 exports.createCookieJar = createCookieJar;
 
-},{"../contrib/has-cors.js":11,"../globalThis.js":15}],25:[function(require,module,exports){
+},{"../contrib/has-cors.js":12,"../globalThis.js":16}],26:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.byteLength = exports.installTimerFunctions = exports.pick = void 0;
@@ -5438,7 +5611,7 @@ function utf8Length(str) {
     return length;
 }
 
-},{"./globalThis.js":15}],26:[function(require,module,exports){
+},{"./globalThis.js":16}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ERROR_PACKET = exports.PACKET_TYPES_REVERSE = exports.PACKET_TYPES = void 0;
@@ -5459,7 +5632,7 @@ Object.keys(PACKET_TYPES).forEach(key => {
 const ERROR_PACKET = { type: "error", data: "parser error" };
 exports.ERROR_PACKET = ERROR_PACKET;
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decode = exports.encode = void 0;
@@ -5509,7 +5682,7 @@ const decode = (base64) => {
 };
 exports.decode = decode;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decodePacket = void 0;
@@ -5577,7 +5750,7 @@ const mapBinary = (data, binaryType) => {
     }
 };
 
-},{"./commons.js":26,"./contrib/base64-arraybuffer.js":27}],29:[function(require,module,exports){
+},{"./commons.js":27,"./contrib/base64-arraybuffer.js":28}],30:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.encodePacket = exports.encodePacketToBinary = void 0;
@@ -5654,7 +5827,7 @@ function encodePacketToBinary(packet, callback) {
 }
 exports.encodePacketToBinary = encodePacketToBinary;
 
-},{"./commons.js":26}],30:[function(require,module,exports){
+},{"./commons.js":27}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decodePayload = exports.decodePacket = exports.encodePayload = exports.encodePacket = exports.protocol = exports.createPacketDecoderStream = exports.createPacketEncoderStream = void 0;
@@ -5820,7 +5993,7 @@ function createPacketDecoderStream(maxPayload, binaryType) {
 exports.createPacketDecoderStream = createPacketDecoderStream;
 exports.protocol = 4;
 
-},{"./commons.js":26,"./decodePacket.js":28,"./encodePacket.js":29}],31:[function(require,module,exports){
+},{"./commons.js":27,"./decodePacket.js":29,"./encodePacket.js":30}],32:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -5859,7 +6032,7 @@ class Logger {
 }
 exports.Logger = Logger;
 
-},{"debug":9}],32:[function(require,module,exports){
+},{"debug":10}],33:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateProfileLevelIdStringForAnswer = exports.isSameProfile = exports.parseSdpProfileLevelId = exports.levelToString = exports.profileToString = exports.profileLevelIdToString = exports.parseProfileLevelId = exports.ProfileLevelId = exports.Level = exports.Profile = void 0;
@@ -6335,7 +6508,7 @@ function isLevelAsymmetryAllowed(params = {}) {
         level_asymmetry_allowed === '1');
 }
 
-},{"./Logger":31}],33:[function(require,module,exports){
+},{"./Logger":32}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Consumer = void 0;
@@ -6527,7 +6700,7 @@ class Consumer extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.Consumer = Consumer;
 
-},{"./EnhancedEventEmitter":37,"./Logger":38,"./errors":43}],34:[function(require,module,exports){
+},{"./EnhancedEventEmitter":38,"./Logger":39,"./errors":44}],35:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataConsumer = void 0;
@@ -6691,7 +6864,7 @@ class DataConsumer extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.DataConsumer = DataConsumer;
 
-},{"./EnhancedEventEmitter":37,"./Logger":38}],35:[function(require,module,exports){
+},{"./EnhancedEventEmitter":38,"./Logger":39}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataProducer = void 0;
@@ -6873,7 +7046,7 @@ class DataProducer extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.DataProducer = DataProducer;
 
-},{"./EnhancedEventEmitter":37,"./Logger":38,"./errors":43}],36:[function(require,module,exports){
+},{"./EnhancedEventEmitter":38,"./Logger":39,"./errors":44}],37:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -7343,7 +7516,7 @@ class Device {
 }
 exports.Device = Device;
 
-},{"./EnhancedEventEmitter":37,"./Logger":38,"./Transport":42,"./errors":43,"./handlers/Chrome111":44,"./handlers/Chrome55":45,"./handlers/Chrome67":46,"./handlers/Chrome70":47,"./handlers/Chrome74":48,"./handlers/Edge11":49,"./handlers/Firefox60":50,"./handlers/ReactNative":52,"./handlers/ReactNativeUnifiedPlan":53,"./handlers/Safari11":54,"./handlers/Safari12":55,"./ortc":64,"./utils":67,"ua-parser-js":83}],37:[function(require,module,exports){
+},{"./EnhancedEventEmitter":38,"./Logger":39,"./Transport":43,"./errors":44,"./handlers/Chrome111":45,"./handlers/Chrome55":46,"./handlers/Chrome67":47,"./handlers/Chrome70":48,"./handlers/Chrome74":49,"./handlers/Edge11":50,"./handlers/Firefox60":51,"./handlers/ReactNative":53,"./handlers/ReactNativeUnifiedPlan":54,"./handlers/Safari11":55,"./handlers/Safari12":56,"./ortc":65,"./utils":68,"ua-parser-js":84}],38:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EnhancedEventEmitter = void 0;
@@ -7415,7 +7588,7 @@ class EnhancedEventEmitter extends events_1.EventEmitter {
 }
 exports.EnhancedEventEmitter = EnhancedEventEmitter;
 
-},{"./Logger":38,"events":3}],38:[function(require,module,exports){
+},{"./Logger":39,"events":3}],39:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -7454,7 +7627,7 @@ class Logger {
 }
 exports.Logger = Logger;
 
-},{"debug":9}],39:[function(require,module,exports){
+},{"debug":10}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Producer = void 0;
@@ -7743,7 +7916,7 @@ class Producer extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.Producer = Producer;
 
-},{"./EnhancedEventEmitter":37,"./Logger":38,"./errors":43}],40:[function(require,module,exports){
+},{"./EnhancedEventEmitter":38,"./Logger":39,"./errors":44}],41:[function(require,module,exports){
 "use strict";
 /**
  * The RTP capabilities define what mediasoup or an endpoint can receive at
@@ -7751,11 +7924,11 @@ exports.Producer = Producer;
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -8620,7 +8793,7 @@ class Transport extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.Transport = Transport;
 
-},{"./Consumer":33,"./DataConsumer":34,"./DataProducer":35,"./EnhancedEventEmitter":37,"./Logger":38,"./Producer":39,"./errors":43,"./ortc":64,"./utils":67,"awaitqueue":8,"queue-microtask":69}],43:[function(require,module,exports){
+},{"./Consumer":34,"./DataConsumer":35,"./DataProducer":36,"./EnhancedEventEmitter":38,"./Logger":39,"./Producer":40,"./errors":44,"./ortc":65,"./utils":68,"awaitqueue":9,"queue-microtask":70}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InvalidStateError = exports.UnsupportedError = void 0;
@@ -8661,7 +8834,7 @@ class InvalidStateError extends Error {
 }
 exports.InvalidStateError = InvalidStateError;
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -9362,7 +9535,7 @@ class Chrome111 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome111 = Chrome111;
 
-},{"../Logger":38,"../errors":43,"../ortc":64,"../scalabilityModes":65,"../utils":67,"./HandlerInterface":51,"./ortc/utils":57,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/unifiedPlanUtils":62,"sdp-transform":71}],45:[function(require,module,exports){
+},{"../Logger":39,"../errors":44,"../ortc":65,"../scalabilityModes":66,"../utils":68,"./HandlerInterface":52,"./ortc/utils":58,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/unifiedPlanUtils":63,"sdp-transform":72}],46:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -9918,7 +10091,7 @@ class Chrome55 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome55 = Chrome55;
 
-},{"../Logger":38,"../errors":43,"../ortc":64,"../utils":67,"./HandlerInterface":51,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/planBUtils":61,"sdp-transform":71}],46:[function(require,module,exports){
+},{"../Logger":39,"../errors":44,"../ortc":65,"../utils":68,"./HandlerInterface":52,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/planBUtils":62,"sdp-transform":72}],47:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -10529,7 +10702,7 @@ class Chrome67 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome67 = Chrome67;
 
-},{"../Logger":38,"../ortc":64,"../utils":67,"./HandlerInterface":51,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/planBUtils":61,"sdp-transform":71}],47:[function(require,module,exports){
+},{"../Logger":39,"../ortc":65,"../utils":68,"./HandlerInterface":52,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/planBUtils":62,"sdp-transform":72}],48:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -11165,7 +11338,7 @@ class Chrome70 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome70 = Chrome70;
 
-},{"../Logger":38,"../ortc":64,"../scalabilityModes":65,"../utils":67,"./HandlerInterface":51,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/unifiedPlanUtils":62,"sdp-transform":71}],48:[function(require,module,exports){
+},{"../Logger":39,"../ortc":65,"../scalabilityModes":66,"../utils":68,"./HandlerInterface":52,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/unifiedPlanUtils":63,"sdp-transform":72}],49:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -11882,7 +12055,7 @@ class Chrome74 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Chrome74 = Chrome74;
 
-},{"../Logger":38,"../errors":43,"../ortc":64,"../scalabilityModes":65,"../utils":67,"./HandlerInterface":51,"./ortc/utils":57,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/unifiedPlanUtils":62,"sdp-transform":71}],49:[function(require,module,exports){
+},{"../Logger":39,"../errors":44,"../ortc":65,"../scalabilityModes":66,"../utils":68,"./HandlerInterface":52,"./ortc/utils":58,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/unifiedPlanUtils":63,"sdp-transform":72}],50:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -12337,7 +12510,7 @@ class Edge11 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Edge11 = Edge11;
 
-},{"../Logger":38,"../errors":43,"../ortc":64,"../utils":67,"./HandlerInterface":51,"./ortc/edgeUtils":56}],50:[function(require,module,exports){
+},{"../Logger":39,"../errors":44,"../ortc":65,"../utils":68,"./HandlerInterface":52,"./ortc/edgeUtils":57}],51:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -13070,7 +13243,7 @@ class Firefox60 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Firefox60 = Firefox60;
 
-},{"../Logger":38,"../errors":43,"../ortc":64,"../scalabilityModes":65,"../utils":67,"./HandlerInterface":51,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/unifiedPlanUtils":62,"sdp-transform":71}],51:[function(require,module,exports){
+},{"../Logger":39,"../errors":44,"../ortc":65,"../scalabilityModes":66,"../utils":68,"./HandlerInterface":52,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/unifiedPlanUtils":63,"sdp-transform":72}],52:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HandlerInterface = void 0;
@@ -13082,7 +13255,7 @@ class HandlerInterface extends EnhancedEventEmitter_1.EnhancedEventEmitter {
 }
 exports.HandlerInterface = HandlerInterface;
 
-},{"../EnhancedEventEmitter":37}],52:[function(require,module,exports){
+},{"../EnhancedEventEmitter":38}],53:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -13653,7 +13826,7 @@ class ReactNative extends HandlerInterface_1.HandlerInterface {
 }
 exports.ReactNative = ReactNative;
 
-},{"../Logger":38,"../errors":43,"../ortc":64,"../utils":67,"./HandlerInterface":51,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/planBUtils":61,"sdp-transform":71}],53:[function(require,module,exports){
+},{"../Logger":39,"../errors":44,"../ortc":65,"../utils":68,"./HandlerInterface":52,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/planBUtils":62,"sdp-transform":72}],54:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -14393,7 +14566,7 @@ class ReactNativeUnifiedPlan extends HandlerInterface_1.HandlerInterface {
 }
 exports.ReactNativeUnifiedPlan = ReactNativeUnifiedPlan;
 
-},{"../Logger":38,"../errors":43,"../ortc":64,"../scalabilityModes":65,"../utils":67,"./HandlerInterface":51,"./ortc/utils":57,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/unifiedPlanUtils":62,"sdp-transform":71}],54:[function(require,module,exports){
+},{"../Logger":39,"../errors":44,"../ortc":65,"../scalabilityModes":66,"../utils":68,"./HandlerInterface":52,"./ortc/utils":58,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/unifiedPlanUtils":63,"sdp-transform":72}],55:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -14999,7 +15172,7 @@ class Safari11 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Safari11 = Safari11;
 
-},{"../Logger":38,"../ortc":64,"../utils":67,"./HandlerInterface":51,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/planBUtils":61,"sdp-transform":71}],55:[function(require,module,exports){
+},{"../Logger":39,"../ortc":65,"../utils":68,"./HandlerInterface":52,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/planBUtils":62,"sdp-transform":72}],56:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -15691,7 +15864,7 @@ class Safari12 extends HandlerInterface_1.HandlerInterface {
 }
 exports.Safari12 = Safari12;
 
-},{"../Logger":38,"../errors":43,"../ortc":64,"../scalabilityModes":65,"../utils":67,"./HandlerInterface":51,"./ortc/utils":57,"./sdp/RemoteSdp":59,"./sdp/commonUtils":60,"./sdp/unifiedPlanUtils":62,"sdp-transform":71}],56:[function(require,module,exports){
+},{"../Logger":39,"../errors":44,"../ortc":65,"../scalabilityModes":66,"../utils":68,"./HandlerInterface":52,"./ortc/utils":58,"./sdp/RemoteSdp":60,"./sdp/commonUtils":61,"./sdp/unifiedPlanUtils":63,"sdp-transform":72}],57:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -15787,7 +15960,7 @@ function mangleRtpParameters(rtpParameters) {
 }
 exports.mangleRtpParameters = mangleRtpParameters;
 
-},{"../../utils":67}],57:[function(require,module,exports){
+},{"../../utils":68}],58:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addNackSuppportForOpus = void 0;
@@ -15808,7 +15981,7 @@ function addNackSuppportForOpus(rtpCapabilities) {
 }
 exports.addNackSuppportForOpus = addNackSuppportForOpus;
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -16380,7 +16553,7 @@ function getCodecName(codec) {
     return mimeTypeMatch[2];
 }
 
-},{"../../utils":67,"sdp-transform":71}],59:[function(require,module,exports){
+},{"../../utils":68,"sdp-transform":72}],60:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -16683,7 +16856,7 @@ class RemoteSdp {
 }
 exports.RemoteSdp = RemoteSdp;
 
-},{"../../Logger":38,"./MediaSection":58,"sdp-transform":71}],60:[function(require,module,exports){
+},{"../../Logger":39,"./MediaSection":59,"sdp-transform":72}],61:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -16914,7 +17087,7 @@ function applyCodecParameters({ offerRtpParameters, answerMediaObject, }) {
 }
 exports.applyCodecParameters = applyCodecParameters;
 
-},{"sdp-transform":71}],61:[function(require,module,exports){
+},{"sdp-transform":72}],62:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addLegacySimulcast = exports.getRtpEncodings = void 0;
@@ -17068,7 +17241,7 @@ function addLegacySimulcast({ offerMediaObject, track, numStreams, }) {
 }
 exports.addLegacySimulcast = addLegacySimulcast;
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addLegacySimulcast = exports.getRtpEncodings = void 0;
@@ -17198,7 +17371,7 @@ function addLegacySimulcast({ offerMediaObject, numStreams, }) {
 }
 exports.addLegacySimulcast = addLegacySimulcast;
 
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -17245,7 +17418,7 @@ exports.version = '3.7.2';
 var scalabilityModes_1 = require("./scalabilityModes");
 Object.defineProperty(exports, "parseScalabilityMode", { enumerable: true, get: function () { return scalabilityModes_1.parse; } });
 
-},{"./Device":36,"./scalabilityModes":65,"./types":66,"debug":9}],64:[function(require,module,exports){
+},{"./Device":37,"./scalabilityModes":66,"./types":67,"debug":10}],65:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -18188,7 +18361,7 @@ function reduceRtcpFeedback(codecA, codecB) {
     return reducedRtcpFeedback;
 }
 
-},{"./utils":67,"h264-profile-level-id":32}],65:[function(require,module,exports){
+},{"./utils":68,"h264-profile-level-id":33}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parse = void 0;
@@ -18210,7 +18383,7 @@ function parse(scalabilityMode) {
 }
 exports.parse = parse;
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -18238,7 +18411,7 @@ __exportStar(require("./SctpParameters"), exports);
 __exportStar(require("./handlers/HandlerInterface"), exports);
 __exportStar(require("./errors"), exports);
 
-},{"./Consumer":33,"./DataConsumer":34,"./DataProducer":35,"./Device":36,"./Producer":39,"./RtpParameters":40,"./SctpParameters":41,"./Transport":42,"./errors":43,"./handlers/HandlerInterface":51}],67:[function(require,module,exports){
+},{"./Consumer":34,"./DataConsumer":35,"./DataProducer":36,"./Device":37,"./Producer":40,"./RtpParameters":41,"./SctpParameters":42,"./Transport":43,"./errors":44,"./handlers/HandlerInterface":52}],68:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateRandomNumber = exports.clone = void 0;
@@ -18269,7 +18442,7 @@ function generateRandomNumber() {
 }
 exports.generateRandomNumber = generateRandomNumber;
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -18433,7 +18606,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 (function (global){(function (){
 /*! queue-microtask. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 let promise
@@ -18446,7 +18619,7 @@ module.exports = typeof queueMicrotask === 'function'
     .catch(err => setTimeout(() => { throw err }, 0))
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],70:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var grammar = module.exports = {
   v: [{
     name: 'version',
@@ -18942,7 +19115,7 @@ Object.keys(grammar).forEach(function (key) {
   });
 });
 
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 var parser = require('./parser');
 var writer = require('./writer');
 
@@ -18955,7 +19128,7 @@ exports.parseRemoteCandidates = parser.parseRemoteCandidates;
 exports.parseImageAttributes = parser.parseImageAttributes;
 exports.parseSimulcastStreamList = parser.parseSimulcastStreamList;
 
-},{"./parser":72,"./writer":73}],72:[function(require,module,exports){
+},{"./parser":73,"./writer":74}],73:[function(require,module,exports){
 var toIntIfInt = function (v) {
   return String(Number(v)) === v ? Number(v) : v;
 };
@@ -19081,7 +19254,7 @@ exports.parseSimulcastStreamList = function (str) {
   });
 };
 
-},{"./grammar":70}],73:[function(require,module,exports){
+},{"./grammar":71}],74:[function(require,module,exports){
 var grammar = require('./grammar');
 
 // customized util.format - discards excess arguments and can void middle ones
@@ -19197,7 +19370,7 @@ module.exports = function (session, opts) {
   return sdp.join('\r\n') + '\r\n';
 };
 
-},{"./grammar":70}],74:[function(require,module,exports){
+},{"./grammar":71}],75:[function(require,module,exports){
 "use strict";
 /**
  * Initialize backoff timer with `opts`.
@@ -19269,7 +19442,7 @@ Backoff.prototype.setJitter = function (jitter) {
     this.jitter = jitter;
 };
 
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19340,7 +19513,7 @@ Object.defineProperty(exports, "protocol", { enumerable: true, get: function () 
 
 module.exports = lookup;
 
-},{"./manager.js":76,"./socket.js":78,"./url.js":79,"debug":9,"socket.io-parser":81}],76:[function(require,module,exports){
+},{"./manager.js":77,"./socket.js":79,"./url.js":80,"debug":10,"socket.io-parser":82}],77:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -19745,7 +19918,7 @@ class Manager extends component_emitter_1.Emitter {
 }
 exports.Manager = Manager;
 
-},{"./contrib/backo2.js":74,"./on.js":77,"./socket.js":78,"@socket.io/component-emitter":6,"debug":9,"engine.io-client":16,"socket.io-parser":81}],77:[function(require,module,exports){
+},{"./contrib/backo2.js":75,"./on.js":78,"./socket.js":79,"@socket.io/component-emitter":7,"debug":10,"engine.io-client":17,"socket.io-parser":82}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -19757,7 +19930,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20625,7 +20798,7 @@ class Socket extends component_emitter_1.Emitter {
 }
 exports.Socket = Socket;
 
-},{"./on.js":77,"@socket.io/component-emitter":6,"debug":9,"socket.io-parser":81}],79:[function(require,module,exports){
+},{"./on.js":78,"@socket.io/component-emitter":7,"debug":10,"socket.io-parser":82}],80:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20697,7 +20870,7 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":9,"engine.io-client":16}],80:[function(require,module,exports){
+},{"debug":10,"engine.io-client":17}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -20787,7 +20960,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary.js":82}],81:[function(require,module,exports){
+},{"./is-binary.js":83}],82:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -21110,7 +21283,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary.js":80,"./is-binary.js":82,"@socket.io/component-emitter":6,"debug":9}],82:[function(require,module,exports){
+},{"./binary.js":81,"./is-binary.js":83,"@socket.io/component-emitter":7,"debug":10}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -21167,7 +21340,7 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 /////////////////////////////////////////////////////////////////////////////////
 /* UAParser.js v1.0.37
    Copyright © 2012-2021 Faisal Salman <f@faisalman.com>
@@ -22115,177 +22288,4 @@ exports.hasBinary = hasBinary;
 
 })(typeof window === 'object' ? window : this);
 
-},{}],84:[function(require,module,exports){
-const io = require('socket.io-client')
-const mediasoupClient = require('mediasoup-client')
-
-const socket = io("/live-video")
-
-let device
-let rtpCapabilities
-let producerTransport
-
-let params = {
-    // mediasoup params
-    encodings: [
-      {
-        rid: 'r0',
-        maxBitrate: 100000,
-        scalabilityMode: 'S1T3',
-      },
-      {
-        rid: 'r1',
-        maxBitrate: 300000,
-        scalabilityMode: 'S1T3',
-      },
-      {
-        rid: 'r2',
-        maxBitrate: 900000,
-        scalabilityMode: 'S1T3',
-      },
-    ],
-    codecOptions: {
-      videoGoogleStartBitrate: 1000
-    }
-}
-
-const streamSuccess = (stream) => {
-    localVideo.srcObject = stream
-    const track = stream.getVideoTracks()[0]
-    params = {
-      track,
-      ...params
-    }
-  
-    getRtpCapabilities()
-  }
-  
-const getLocalStream = () => {
-    navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-        width: {
-            min: 640,
-            max: 1920,
-        },
-        height: {
-            min: 400,
-            max: 1080,
-        }
-        }
-    })
-    .then(streamSuccess)
-    .catch(error => {
-        console.log(error.message)
-    })
-}
-
-const createDevice = async () => {
-    try {
-        device = new mediasoupClient.Device()
-        // Loads the device with RTP capabilities of the Router (server side)
-        await device.load({
-            routerRtpCapabilities: rtpCapabilities
-        })
-        // once the device loads, create transport
-        createSendTransport()
-
-    } catch (error) {
-        console.log(error)
-        if (error.name === 'UnsupportedError')
-        console.warn('browser not supported')
-    }
-}
-
-const getRtpCapabilities = () => {
-
-    socket.emit('getRtpCaps', (data) => {
-        rtpCapabilities = data.rtpCapabilities
-        createDevice()
-    })
-}
-
-const createSendTransport = () => {
-   
-    socket.emit('createWebRtcTransport',({ params }) => {
-        
-        if (params.error) {
-            console.log(params.error)
-            return
-        }
-        // creates a new WebRTC Transport to send media
-        // based on the server's producer transport params
-        producerTransport = device.createSendTransport(params)
-        producerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-            try {
-                // Signal local DTLS parameters to the server side transport
-                await socket.emit('transport-connect', {
-                    dtlsParameters,
-                })
-
-                // Tell the transport that parameters were transmitted.
-                callback()
-            } catch (error) {
-                errback(error)
-            }
-        })
-
-        producerTransport.on('produce', async (parameters, callback, errback) => {
-
-            try {
-                // Tell the server to create a Producer with the following parameters and produce
-                await socket.emit('transport-produce', {
-                    kind: parameters.kind,
-                    rtpParameters: parameters.rtpParameters,
-                    appData: parameters.appData,
-                    }, ({ id }) => {
-                    // Tell the transport that parameters were transmitted.
-                    callback({ id })
-                })
-            } catch (error) {
-                errback(error)
-            }
-        })
-
-        connectSendTransport()
-    })
-}
-
-const connectSendTransport = async () => {
-    const producer = await producerTransport.produce(params)
-
-    producer.on('trackended', () => {
-        console.log('track ended')
-        // close video track
-    })
-
-    producer.on('transportclose', () => {
-        console.log('transport ended')
-        // close transport
-    })
-}
-
-const generateRoomId = () => {
-    const randomId = Math.random().toString(36).substring(7);
-    return randomId;
-};
-
-const startStream = async () => {
-    const roomId = generateRoomId();
-
-    try {
-        // Send the roomId to the server
-        socket.emit('startStream', roomId, () => {
-           // Get user media (webcam)
-            getLocalStream() 
-        });
-
-        console.log(`Streaming started in room: ${roomId}`);
-    } catch (error) {
-        console.error('Error accessing webcam:', error);
-    }
-};
-
-document.getElementById('startStreamBtn').addEventListener('click', startStream);
-
-},{"mediasoup-client":63,"socket.io-client":75}]},{},[84]);
+},{}]},{},[6]);
