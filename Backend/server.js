@@ -5,11 +5,21 @@ const path = require('path');
 const http = require('http');
 const config = require('./config/appConfig')
 const Room = require('./lib/Room')
+const cors = require('cors');
 const app = express()
+
+const FRONTEND_URL = "https://localhost/5173"
 
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: [FRONTEND_URL],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 
 const server = http.createServer(app);
 const io = new Server(server);
