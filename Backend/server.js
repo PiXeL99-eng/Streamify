@@ -8,21 +8,24 @@ const Room = require('./lib/Room')
 const cors = require('cors');
 const app = express()
 
-const FRONTEND_URL = "https://localhost/5173"
-
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: [FRONTEND_URL],
+    origin: [process.env.FRONTEND_URL],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin : "*",
+    methods : ['GET','POST'],
+  }
+});
 
 app.get('/stream', (req, res) => {
   res.sendFile(path.join(__dirname,"/public/stream.html"))
