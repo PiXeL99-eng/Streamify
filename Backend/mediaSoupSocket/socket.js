@@ -1,12 +1,13 @@
 const { Server } = require('socket.io')
 const { createWorkers } = require('./utils/mediaSoupUtils');
-require("dotenv").config({path : "../config/config.env"});
+const path = require('path');
+require("dotenv").config({path : path.resolve(__dirname, '../config/config.env') });
 
 let mediasoupWorkers = []
 
 const io = new Server(process.env.WEB_SOCKET_PORT || 8900, {
     cors: {
-      origin : ['*'],
+      origin : '*',
       methods : ['GET','POST'],
     }
 });
@@ -19,7 +20,7 @@ const registerChatHandlers = require("./handlers/chatHandler");
 peers.on('connection', async socket => {
     console.log(socket.id)
 
-    registerTransportHandlers(peers, socket);
+    registerTransportHandlers(peers, socket, mediasoupWorkers);
     registerChatHandlers(peers, socket);
 })
 
@@ -35,5 +36,5 @@ async function setupMediaSoup() {
   }
 }
 
-console.log('Socket Server setup complete');
+console.log(`Socket Server running on port ${process.env.WEB_SOCKET_PORT}`);
 setupMediaSoup();

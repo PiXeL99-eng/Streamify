@@ -8,6 +8,13 @@ const app = express()
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: ["*"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+)
 
 
 app.get('/stream', (req, res) => {
@@ -18,6 +25,6 @@ app.get('/consume', (req, res) => {
   res.sendFile(path.join(__dirname,"/public/consume.html"))
 })
 
-app.listen(process.env.API_SERVER_PORT, () => {
-  console.log('listening on port: ' + 3000);
+app.listen(process.env.API_SERVER_PORT || 3000, () => {
+  console.log(`API Server Listening on port: ${process.env.API_SERVER_PORT}`);
 })

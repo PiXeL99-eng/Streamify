@@ -2,12 +2,12 @@ const Room = require('../lib/Room')
 
 const rooms = new Map()
 
-module.exports = (io, socket) => {
+module.exports = (io, socket, workers) => {
 
     const startStream = async (roomId, callback) => {
         //socket.join(roomId);
         socket.roomId = roomId;
-        const room = await Room.createRouters(roomId, peers, workers, socket.id)
+        const room = await Room.createRouters(roomId, io, workers, socket.id)
         rooms.set(roomId,room);
         callback();
     }
