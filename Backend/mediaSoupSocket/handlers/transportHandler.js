@@ -1,4 +1,4 @@
-const Room = require('./lib/Room')
+const Room = require('../lib/Room')
 
 const rooms = new Map()
 

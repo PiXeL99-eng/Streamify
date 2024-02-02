@@ -4,7 +4,7 @@ import { io } from 'socket.io-client'
 import * as mediasoupClient from "mediasoup-client"
 
 // const socket = io("/live-video")
-const socket = io("ws://localhost:3000/live-video")
+const socket = io("ws://localhost:8900/live-video")
 
 let device
 let rtpCapabilities

@@ -1,7 +1,7 @@
 const io = require('socket.io-client')
 const mediasoupClient = require('mediasoup-client')
 
-const socket = io("/live-video")
+const socket = io("ws://localhost:8900/live-video")
 
 let device
 let rtpCapabilities

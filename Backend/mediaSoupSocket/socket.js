@@ -6,15 +6,15 @@ let mediasoupWorkers = []
 
 const io = new Server(process.env.WEB_SOCKET_PORT || 8900, {
     cors: {
-      origin : process.env.FRONTEND_URL,
+      origin : ['*'],
       methods : ['GET','POST'],
     }
 });
 
 const peers = io.of('/live-video')
 
-const registerTransportHandlers = require("handlers/transportHandler");
-const registerChatHandlers = require("handlers/chatHandler");
+const registerTransportHandlers = require("./handlers/transportHandler");
+const registerChatHandlers = require("./handlers/chatHandler");
 
 peers.on('connection', async socket => {
     console.log(socket.id)

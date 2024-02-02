@@ -96,7 +96,7 @@ const connectRecvTransport = async () => {
 
 const consumeStream = (inputRoomID) => {
     const roomId = inputRoomID;
-    socket = io("ws://localhost:3000/live-video")
+    socket = io("ws://localhost:8900/live-video")
 
     try {
         socket.emit("JoinRoom",roomId, () => {
