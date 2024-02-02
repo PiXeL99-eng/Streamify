@@ -4,6 +4,7 @@ import Signup from "./Signup";
 import Signin from "./Signin";
 import Stream from "./Stream";
 import Consume from "./Consume";
+import StreamPage from "./StreamPage"
 
 export {
     Test,
@@ -11,5 +12,6 @@ export {
     Signup,
     Signin,
     Stream,
-    Consume
+    Consume,
+    StreamPage
 }
