@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
     "express": "^4.18.2",
     "mediasoup": "^3.13.16",
     "mediasoup-client": "^3.7.2",
@@ -9,7 +10,9 @@
     "socket.io-client": "^4.7.4"
   },
   "scripts": {
-    "start": "nodemon server.js",
+    "start": "node ApiServer/server.js && node mediaSoupSocket/socket.js",
+    "dev:api": "nodemon ApiServer/server.js",
+    "dev:socket": "nodemon mediaSoupSocket/socket.js",
     "watch:app": "browserify public/app.js -o public/bundles/bundle.js -v",
     "watch:pub": "browserify mediasoupEndPoints/publisher.js -o public/bundles/bundle1.js -v",
     "watch:sub": "browserify mediasoupEndPoints/consumer.js -o public/bundles/bundle2.js -v",

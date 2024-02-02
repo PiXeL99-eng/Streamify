@@ -1,4 +1,4 @@
-const config = require('../config/appConfig')
+const config = require('../../config/appConfig')
 const Peer = require('./Peer')
 
 module.exports = class Room {
