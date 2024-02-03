@@ -1,4 +1,11 @@
 #remoteVideo{
     position: absolute;
     bottom: 0px;
+    height: 10rem;
+}
+
+#localVideo{
+    position: absolute;
+    bottom: 0px;
+    height: 10rem;
 }

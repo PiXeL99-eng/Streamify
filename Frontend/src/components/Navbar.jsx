@@ -4,10 +4,11 @@ import { SearchIcon, ChatIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
 import { UserButton } from '@clerk/clerk-react'
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure } from '@chakra-ui/react'
-import { FaVideo } from "react-icons/fa6"
-import { FaUpload } from "react-icons/fa6";
+import { FaVideo, FaUpload } from "react-icons/fa6"
+import { startStream } from '../mediaSoupEndPoints'
 
-const Navbar = () => {
+const Navbar = (props) => {
+
     return (
         <>
             <Box width={"100vw"} background={"#252630"} color={"white"} height={"9%"}>
@@ -18,7 +19,7 @@ const Navbar = () => {
 
                     <SearchBox />
 
-                    <RightCornerNavbar />
+                    <RightCornerNavbar profile={props.profile} setProfile={props.setProfile}/>
 
                 </HStack>
 
@@ -70,7 +71,7 @@ const LeftCornerNavbar = () => {
     )
 }
 
-const RightCornerNavbar = () => {
+const RightCornerNavbar = (props) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -81,12 +82,17 @@ const RightCornerNavbar = () => {
     return (
         <>
 
-            <StartNewStream isOpen={isOpen} onOpen={onOpen} onClose={onClose} />
+            <StartNewStreamModal isOpen={isOpen} onOpen={onOpen} onClose={onClose} setProfile={props.setProfile}/>
 
             <Box width={"20%"} marginRight={"2"}>
                 <HStack spacing={"0"} justifyContent={"space-between"}>
                     <HStack spacing={"3"} _hover={{ cursor: "pointer" }} onClick={showDashboard}>
-                        <Button onClick={onOpen}>Start Streaming</Button>
+                        <Button 
+                        onClick={onOpen}
+                        isDisabled={props.profile === "streamer" ? true : false}
+                        >
+                            Start Streaming
+                        </Button>
                         <Image
                             boxSize='22px'
                             src={DashboardImage}
@@ -110,7 +116,16 @@ const RightCornerNavbar = () => {
     )
 }
 
-const StartNewStream = (props) => {
+const StartNewStreamModal = (props) => {
+
+    const startStreamingFunction = () => {
+
+        //API call to create new room
+        // delay or loading screen
+        props.setProfile("streamer")
+        startStream()
+        props.onClose()
+    }
 
     return (
         <Modal isOpen={props.isOpen} onClose={props.onClose}>
@@ -155,7 +170,7 @@ const StartNewStream = (props) => {
                 </ModalBody>
 
                 <ModalFooter justifyContent={"center"}>
-                    <Button colorScheme='blue' mr={3} onClick={props.onClose}>
+                    <Button colorScheme='blue' mr={3} onClick={startStreamingFunction}>
                         Start Stream ▶
                     </Button>
                 </ModalFooter>

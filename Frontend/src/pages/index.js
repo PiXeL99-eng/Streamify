@@ -4,7 +4,8 @@ import Signup from "./Signup";
 import Signin from "./Signin";
 import Stream from "./Stream";
 import Consume from "./Consume";
-import StreamPage from "./StreamPage"
+import StreamPage from "./StreamPage";
+import AllVideos from "./AllVideos";
 
 export {
     Test,
@@ -13,5 +14,6 @@ export {
     Signin,
     Stream,
     Consume,
-    StreamPage
+    StreamPage,
+    AllVideos
 }

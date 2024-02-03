@@ -1,12 +1,10 @@
 import React, {useState} from 'react'
 import { Container, Box, Button, HStack } from '@chakra-ui/react'
-import { Navbar, Sidebar, Midbox, StreamChat } from '../components'
+import { Navbar, Sidebar, AllVideosGrid } from '../components'
 
-// Stream Page is a clone of Home page
+const AllVideos = () => {
 
-const StreamPage = () => {
-
-    const [profile, setProfile] = useState("viewer") // or viewer
+    const [profile, setProfile] = useState("viewer") // or viewer   ----------- set this one to global profile
 
     return (
         <>
@@ -16,8 +14,7 @@ const StreamPage = () => {
                     <HStack height={"100%"} spacing={"0"}>
 
                         <Sidebar profile = {profile}/>
-                        <Midbox profile = {profile} setProfile = {setProfile}/>
-                        <StreamChat />
+                        <AllVideosGrid/>
 
                     </HStack>
                 </Box>
@@ -26,4 +23,4 @@ const StreamPage = () => {
     )
 }
 
-export default StreamPage
+export default AllVideos

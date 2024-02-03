@@ -12,14 +12,12 @@ const Midbox = (props) => {
                 <VStack width={"100%"} height={"100%"} spacing={"0"}>
 
                     {props.profile === "streamer" ?
-                        <StreamControl /> : <></>
+                        <StreamControl setProfile = {props.setProfile}/> : <></>
                     }
 
                     <Box width={"100%"} background={"#454a4a"} height={"29rem"} position={"relative"}>
 
-                        {props.profile === "streamer" ?
-                            <StreamingBox /> : <VideoBox />
-                        }
+                        <VideoBox profile={props.profile}/>
 
                     </Box>
 
@@ -43,15 +41,28 @@ const Midbox = (props) => {
     )
 }
 
-const VideoBox = () => {
+const VideoBox = (props) => {
     return (
         <>
-            <video id="remoteVideo" autoPlay = {true} className="video"></video>
+
+            {props.profile === "streamer" ? 
+                <video id="localVideo" autoPlay = {true} className="video"></video>
+                :
+                <video id="remoteVideo" autoPlay={true} className="video"></video>
+            }
         </>
     )
 }
 
-const StreamControl = () => {
+const StreamControl = (props) => {
+
+    const stopStreaming = () => {
+
+        props.setProfile("viewer")
+        //API call
+
+    }
+
     return (
         <>
             <Box width={"100%"}>
@@ -64,7 +75,7 @@ const StreamControl = () => {
                         </Box>
 
                         <Box width={"25%"} alignContent={"center"}>
-                            <Button width={"100%"} rightIcon={<CloseIcon ml={"1"} fontSize={"13"} />} colorScheme='red' variant='solid' isLoading={false} loadingText='Stopping' spinnerPlacement='end'>
+                            <Button width={"100%"} rightIcon={<CloseIcon ml={"1"} fontSize={"13"} />} colorScheme='red' variant='solid' isLoading={false} loadingText='Stopping' spinnerPlacement='end' onClick={stopStreaming}>
                                 Stop Streaming
                             </Button>
                         </Box>
@@ -83,7 +94,7 @@ const VideoDesc = (props) => {
 
         <HStack width={"100%"} spacing={"3"}>
             <Box>
-                <Avatar name='Dan Abrahmov' src='https://bit.ly/dan-abramov' boxSize={"16"}/>
+                <Avatar name='Dan Abrahmov' src='https://bit.ly/dan-abramov' boxSize={"16"} />
             </Box>
 
             <Box >
