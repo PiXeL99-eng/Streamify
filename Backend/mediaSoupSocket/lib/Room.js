@@ -1,4 +1,4 @@
-const config = require('../../config/appConfig')
+const config = require('./config/appConfig')
 const Peer = require('./Peer')
 
 module.exports = class Room {
@@ -120,7 +120,6 @@ module.exports = class Room {
                 producerId: this.producer.id,
                 rtpCapabilities
             })) {
-                // transport can now consume and return a consumer
                 const consumer = await consumerTransport.consume({
                     producerId: this.producer.id,
                     rtpCapabilities,
@@ -174,6 +173,9 @@ module.exports = class Room {
             consumer.close()
             this.consumers.delete(peerId)
         }
+        
+        // remove peer from room
+        this.peers.delete(peerId);
     }
 
     disconnectPeer(peerId) {

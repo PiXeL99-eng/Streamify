@@ -1,0 +1,25 @@
+{
+  "name": "apiserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "watch:app": "browserify public/app.js -o public/bundles/bundle.js -v",
+    "watch:pub": "browserify mediasoupEndPoints/publisher.js -o public/bundles/bundle1.js -v",
+    "watch:sub": "browserify mediasoupEndPoints/consumer.js -o public/bundles/bundle2.js -v",
+    "watch:all": "npm run watch:pub && npm run watch:sub"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "mediasoup-client": "^3.7.2",
+    "socket.io-client": "^4.7.4"
+  }
+}

@@ -1,5 +1,6 @@
 const mediasoup = require('mediasoup');
-const config = require('../../config/appConfig')
+const path = require('path')
+require("dotenv").config({path : path.resolve(__dirname, './config/appConfig') });
 
 const createWorkers = async () => {
     const workers = [];

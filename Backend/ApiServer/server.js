@@ -25,6 +25,7 @@ app.get('/consume', (req, res) => {
   res.sendFile(path.join(__dirname,"/public/consume.html"))
 })
 
-app.listen(process.env.API_SERVER_PORT || 3000, () => {
-  console.log(`API Server Listening on port: ${process.env.API_SERVER_PORT}`);
+const PORT = process.env.API_SERVER_PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`API Server Listening on port: ${PORT}`);
 })

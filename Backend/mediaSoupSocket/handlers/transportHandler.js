@@ -63,14 +63,14 @@ module.exports = (io, socket, workers) => {
     // do some cleanup
         try{
             if(rooms.has(socket.roomId)){
-            const producerDisconnect = rooms.get(socket.roomId).disconnectPeer(socket.id);
-            if(producerDisconnect){
-                rooms.delete(socket.roomId);
-                console.log("Room removed")
-            }
-            else{
-                console.log('peer disconnected')
-            }
+                const producerDisconnect = rooms.get(socket.roomId).disconnectPeer(socket.id);
+                if(producerDisconnect){
+                    rooms.delete(socket.roomId);
+                    console.log("Room removed")
+                }
+                else{
+                    console.log('peer disconnected')
+                }
             }
         } catch(err) {
             console.log("Error occured");

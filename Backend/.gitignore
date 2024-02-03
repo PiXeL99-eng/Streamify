@@ -1,3 +1,4 @@
 package-lock.json
 node_modules
-/config/config.env
+/mediaSoupSocket/config/config.env
+/ApiServer/config/config.env
