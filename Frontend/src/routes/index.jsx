@@ -2,7 +2,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react"
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AuthRoute } from "./AuthRoute";
-import { Home, Signin, Signup, Test, Stream, Consume} from "../pages"
+import { Home, Signin, Signup, Test, Stream, Consume, StreamPage} from "../pages"
 
 const Routes = () => {
 
@@ -21,6 +21,10 @@ const Routes = () => {
     {
       path: "/consume",
       element: < Consume />,
+    },
+    {
+      path: "/streampage",
+      element: < StreamPage />,
     },
   ];
 

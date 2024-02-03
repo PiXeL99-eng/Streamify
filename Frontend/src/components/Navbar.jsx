@@ -1,9 +1,11 @@
 import React from 'react'
-import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar } from '@chakra-ui/react'
-import { SearchIcon } from '@chakra-ui/icons'
+import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, FormLabel } from '@chakra-ui/react'
+import { SearchIcon, ChatIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
 import { UserButton } from '@clerk/clerk-react'
-
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure } from '@chakra-ui/react'
+import { FaVideo } from "react-icons/fa6"
+import { FaUpload } from "react-icons/fa6";
 
 const Navbar = () => {
     return (
@@ -70,19 +72,27 @@ const LeftCornerNavbar = () => {
 
 const RightCornerNavbar = () => {
 
+    const { isOpen, onOpen, onClose } = useDisclosure()
+
     const showDashboard = () => {
         console.log("show dashboard")
     }
+
     return (
         <>
-            <Box width={"12%"} marginRight={"8"}>
+
+            <StartNewStream isOpen={isOpen} onOpen={onOpen} onClose={onClose} />
+
+            <Box width={"20%"} marginRight={"2"}>
                 <HStack spacing={"0"} justifyContent={"space-between"}>
                     <HStack spacing={"3"} _hover={{ cursor: "pointer" }} onClick={showDashboard}>
+                        <Button onClick={onOpen}>Start Streaming</Button>
                         <Image
                             boxSize='22px'
                             src={DashboardImage}
                             alt='Dashboard-Image'
                         />
+
                         <Text fontSize='md'>Dashboard</Text>
                         {/* OR */}
                         {/* <Image
@@ -97,6 +107,60 @@ const RightCornerNavbar = () => {
                 </HStack>
             </Box>
         </>
+    )
+}
+
+const StartNewStream = (props) => {
+
+    return (
+        <Modal isOpen={props.isOpen} onClose={props.onClose}>
+            <ModalOverlay />
+            <ModalContent background={"#2d2d2d"} color={"white"} marginTop={"20"} border={"2px solid #ffffff24"}>
+                <ModalHeader>Your Stream Details</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+
+                    <HStack spacing={"5"}>
+
+                        <Box>
+                            <FormLabel opacity={"0.7"}>Preview Image</FormLabel>
+
+                            <Image src='https://bit.ly/dan-abramov' alt='Dan Abramov' />
+
+                        </Box>
+
+                        <Box>
+                            <FormLabel opacity={"0.7"}>Video Title</FormLabel>
+                            <Input
+                                size="md"
+                                border="1px solid #4c4c4c"
+                                // onChange={event => setEmail(event.currentTarget.value)}
+                                // variant='filled'
+                            />
+                            <FormLabel marginTop={"2"} opacity={"0.7"}>Video Description</FormLabel>
+                            <Input
+                                size="lg"
+                                border="1px solid #4c4c4c"
+                                // variant='filled'
+                            // onChange={event => setEmail(event.currentTarget.value)}
+                            />
+
+                            <HStack spacing={"4"} marginTop={"4"}>
+                                <Box border={"2px solid transparent"} borderRadius={"5"} background={"#33763c"} padding={"1.5"}><FaUpload size={"28"}/></Box>
+                                <Box border={"2px solid transparent"} borderRadius={"5"} background={"#33763c"} padding={"1.5"}><ChatIcon boxSize={"7"}/></Box>
+                                <Box border={"2px solid transparent"} borderRadius={"5"} background={"#33763c"} padding={"1.5"}><FaVideo size={"28"}/></Box>
+                            </HStack>
+                        </Box>
+                    </HStack>
+                </ModalBody>
+
+                <ModalFooter justifyContent={"center"}>
+                    <Button colorScheme='blue' mr={3} onClick={props.onClose}>
+                        Start Stream ▶
+                    </Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
     )
 }
 
