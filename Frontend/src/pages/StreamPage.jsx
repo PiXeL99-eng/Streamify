@@ -4,9 +4,10 @@ import { Navbar, Sidebar, Midbox, StreamChat } from '../components'
 
 // Stream Page is a clone of Home page
 
-const StreamPage = () => {
+const StreamPage = (props) => {
 
-    const [profile, setProfile] = useState("viewer") // or viewer
+    const profile = props.profile
+    const setProfile = props.setProfile
 
     return (
         <>

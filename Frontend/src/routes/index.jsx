@@ -1,3 +1,4 @@
+import React, {useState} from 'react'
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react"
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -7,6 +8,8 @@ import { Home, Signin, Signup, Test, Stream, Consume, StreamPage, AllVideos} fro
 const Routes = () => {
 
   const { userId, isLoaded } = useAuth()
+  const [profile, setProfile] = useState("viewer") // or streamer
+
   // Route configurations go here
 
   const routesForPublic = [
@@ -24,11 +27,11 @@ const Routes = () => {
     },
     {
       path: "/streampage",
-      element: < StreamPage />,
+      element: < StreamPage profile = {profile} setProfile = {setProfile}/>,
     },
     {
       path: "/allvideos",
-      element: < AllVideos />,
+      element: < AllVideos profile = {profile} setProfile = {setProfile}/>,
     },
   ];
 

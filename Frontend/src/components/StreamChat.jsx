@@ -46,7 +46,19 @@ const ChatTop = () => {
 const ChatBox = () => {
   return (
     <>
-      Welcome to chat
+      <Box height={"100%"} width={"100%"} overflow={"auto"} position={"relative"}>
+        <VStack alignItems={"flex-start"} position={"absolute"} bottom={"0px"}>
+          <Text fontSize={"sm"} paddingX={"5"} wordBreak={"break-word"}>
+            15:12 &nbsp; <span style={{color: "#92fa92"}}><b>antonio:</b></span> &nbsp; Hello brogdzb
+          </Text>
+          <Text fontSize={"sm"} paddingX={"5"} wordBreak={"break-word"}>
+            15:12 &nbsp; <span style={{color: "#92fa92"}}><b>antonio:</b></span> &nbsp; Hello brogdzb
+          </Text>
+          <Text fontSize={"sm"} paddingX={"5"} wordBreak={"break-word"}>
+            15:12 &nbsp; <span style={{color: "#92fa92"}}><b>antonio:</b></span> &nbsp; Hello brogdzb
+          </Text>
+        </VStack>
+      </Box>
     </>
   )
 }
@@ -57,8 +69,8 @@ const NewMessage = () => {
       <Box width={"86%"} paddingY={"5"}>
         <InputGroup border={"#4f4f4f"}>
           <Input placeholder='Send a message' />
-          <InputRightElement background={"#89898924"}>
-            <ArrowForwardIcon color='white' />
+          <InputRightElement background={"#89898924"} _hover={{cursor: "pointer"}}>
+            <ArrowForwardIcon color='white'/>
           </InputRightElement>
         </InputGroup>
       </Box>

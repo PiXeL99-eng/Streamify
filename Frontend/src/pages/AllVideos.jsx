@@ -2,9 +2,10 @@ import React, {useState} from 'react'
 import { Container, Box, Button, HStack } from '@chakra-ui/react'
 import { Navbar, Sidebar, AllVideosGrid } from '../components'
 
-const AllVideos = () => {
+const AllVideos = (props) => {
 
-    const [profile, setProfile] = useState("viewer") // or viewer   ----------- set this one to global profile
+    const profile = props.profile
+    const setProfile = props.setProfile
 
     return (
         <>
@@ -14,7 +15,7 @@ const AllVideos = () => {
                     <HStack height={"100%"} spacing={"0"}>
 
                         <Sidebar profile = {profile}/>
-                        <AllVideosGrid/>
+                        <AllVideosGrid profile = {profile}/>
 
                     </HStack>
                 </Box>

@@ -3,7 +3,7 @@ import { Container, Box, Button, HStack, SimpleGrid, Avatar, VStack, Text, Card,
 import { consumeStream } from '../mediaSoupEndPoints'
 import { useNavigate } from "react-router-dom"
 
-const AllVideosGrid = () => {
+const AllVideosGrid = (props) => {
 
     const navigate = useNavigate()
 

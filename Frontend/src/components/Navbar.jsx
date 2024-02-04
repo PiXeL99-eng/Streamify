@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, FormLabel } from '@chakra-ui/react'
 import { SearchIcon, ChatIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
@@ -118,6 +118,9 @@ const RightCornerNavbar = (props) => {
 
 const StartNewStreamModal = (props) => {
 
+    const [videoTitle, setVideoTitle] = useState("")
+    const [videoDescription, setVideoDescription] = useState("")
+
     const startStreamingFunction = () => {
 
         //API call to create new room
@@ -149,7 +152,7 @@ const StartNewStreamModal = (props) => {
                             <Input
                                 size="md"
                                 border="1px solid #4c4c4c"
-                                // onChange={event => setEmail(event.currentTarget.value)}
+                                onChange={event => setVideoTitle(event.currentTarget.value)}
                                 // variant='filled'
                             />
                             <FormLabel marginTop={"2"} opacity={"0.7"}>Video Description</FormLabel>
@@ -157,7 +160,7 @@ const StartNewStreamModal = (props) => {
                                 size="lg"
                                 border="1px solid #4c4c4c"
                                 // variant='filled'
-                            // onChange={event => setEmail(event.currentTarget.value)}
+                                onChange={event => setVideoDescription(event.currentTarget.value)}
                             />
 
                             <HStack spacing={"4"} marginTop={"4"}>
