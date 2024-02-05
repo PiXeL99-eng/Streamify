@@ -1,7 +1,10 @@
+require("dotenv").config();
+
 const express = require('express')
 const path = require('path');
 const cors = require('cors');
-require("dotenv").config({path : "./config/config.env"});
+const prisma = require("./data/db")
+const videoRouter = require("./routes/videoRoutes")
 
 const app = express()
 
@@ -15,6 +18,7 @@ app.use(
     credentials: true,
   })
 )
+app.use("/Streamify",videoRouter);
 
 
 app.get('/stream', (req, res) => {

@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model video {
+  videoId         Int     @id @default(autoincrement())
+  videoDesc       String
+  videoUrl        String  @db.Text
+  previewImageUrl String  @db.Text
+  live            Boolean
+  roomId          String  @db.Uuid
+  userId          String
+}

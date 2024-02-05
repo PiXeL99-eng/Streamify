@@ -1,4 +1,5 @@
 package-lock.json
 node_modules
 /mediaSoupSocket/config/config.env
-/ApiServer/config/config.env
+/ApiServer/.env
+/ApiServer/prisma/migrations
