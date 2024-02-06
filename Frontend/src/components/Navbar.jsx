@@ -5,6 +5,7 @@ import { DashboardImage, Exitmage } from "../assets"
 import { UserButton } from '@clerk/clerk-react'
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure } from '@chakra-ui/react'
 import { FaVideo, FaUpload } from "react-icons/fa6"
+import { useNavigate } from "react-router-dom"
 import { startStream } from '../mediaSoupEndPoints'
 
 const Navbar = (props) => {
@@ -73,10 +74,12 @@ const LeftCornerNavbar = () => {
 
 const RightCornerNavbar = (props) => {
 
+    const navigate = useNavigate()
+
     const { isOpen, onOpen, onClose } = useDisclosure()
 
-    const showDashboard = () => {
-        console.log("show dashboard")
+    const showAllVideos = () => {
+        navigate("/allvideos", { replace: true })
     }
 
     return (
@@ -84,31 +87,24 @@ const RightCornerNavbar = (props) => {
 
             <StartNewStreamModal isOpen={isOpen} onOpen={onOpen} onClose={onClose} setProfile={props.setProfile}/>
 
-            <Box width={"20%"} marginRight={"2"}>
-                <HStack spacing={"0"} justifyContent={"space-between"}>
-                    <HStack spacing={"3"} _hover={{ cursor: "pointer" }} onClick={showDashboard}>
-                        <Button 
+            <Box width={"12%"} marginRight={"2"}>
+                <HStack spacing={"0"} justifyContent={"space-around"}>
+                    <HStack spacing={"2"} _hover={{ cursor: "pointer" }} onClick={showAllVideos}>
+                        {/* <Button 
                         onClick={onOpen}
                         isDisabled={props.profile === "streamer" ? true : false}
                         >
                             Start Streaming
-                        </Button>
+                        </Button> */}
                         <Image
                             boxSize='22px'
                             src={DashboardImage}
                             alt='Dashboard-Image'
                         />
 
-                        <Text fontSize='md'>Dashboard</Text>
-                        {/* OR */}
-                        {/* <Image
-                            boxSize='22px'
-                            src={Exitmage}
-                            alt='Exit-Image'
-                        />
-                        <Text fontSize='md'>Exit</Text> */}
+                        <Text fontSize='md'>Watch</Text>
                     </HStack>
-                    <UserButton afterSignOutUrl='/signin' />
+                    <UserButton afterSignOutUrl='/' />
                     {/* <Avatar boxSize={"9"} name='Kola Tioluwani' src='https://bit.ly/tioluwani-kolawole' /> */}
                 </HStack>
             </Box>

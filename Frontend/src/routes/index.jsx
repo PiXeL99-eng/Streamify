@@ -2,8 +2,7 @@ import React, {useState} from 'react'
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react"
 import { ProtectedRoute } from "./ProtectedRoute";
-import { AuthRoute } from "./AuthRoute";
-import { Home, Signin, Signup, Test, Stream, Consume, StreamPage, AllVideos} from "../pages"
+import { Home, Test, Stream, Consume, StreamPage, AllVideos, Landing} from "../pages"
 
 const Routes = () => {
 
@@ -15,7 +14,7 @@ const Routes = () => {
   const routesForPublic = [
     {
       path: "/",
-      element: <div>Landing</div>,
+      element: < Landing />,
     },
     {
       path: "/stream",
@@ -26,7 +25,7 @@ const Routes = () => {
       element: < Consume />,
     },
     {
-      path: "/streampage",
+      path: "/videopage",
       element: < StreamPage profile = {profile} setProfile = {setProfile}/>,
     },
     {
@@ -49,20 +48,20 @@ const Routes = () => {
   ];
 
   const routesForNotAuthenticatedOnly = [
-    {
-      path: "/",
-      element: <AuthRoute />,
-      children: [
-        {
-          path: "/signin",
-          element: <Signin />,
-        },
-        {
-          path: "/signup",
-          element: <Signup />,
-        }
-      ],
-    }
+    // {
+    //   path: "/",
+    //   element: <AuthRoute />,
+    //   children: [
+    //     {
+    //       path: "/signin",
+    //       element: <Signin />,
+    //     },
+    //     {
+    //       path: "/signup",
+    //       element: <Signup />,
+    //     }
+    //   ],
+    // }
   ];
 
 

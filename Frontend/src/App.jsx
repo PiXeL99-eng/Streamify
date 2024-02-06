@@ -1,5 +1,5 @@
 import './App.css'
-import { Test, Home, Signin, Signup } from './pages'
+import { Test, Home} from './pages'
 import Routes from "./routes";
 
 function App() {
