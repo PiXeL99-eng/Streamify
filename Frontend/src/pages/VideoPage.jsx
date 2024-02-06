@@ -4,7 +4,7 @@ import { Navbar, Sidebar, Midbox, StreamChat } from '../components'
 
 // Stream Page is a clone of Home page
 
-const StreamPage = (props) => {
+const VideoPage = (props) => {
 
     const profile = props.profile
     const setProfile = props.setProfile
@@ -27,4 +27,4 @@ const StreamPage = (props) => {
     )
 }
 
-export default StreamPage
+export default VideoPage

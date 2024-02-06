@@ -2,7 +2,7 @@ import Test from "./Test";
 import Home from "./Home";
 import Stream from "./Stream";
 import Consume from "./Consume";
-import StreamPage from "./StreamPage";
+import VideoPage from "./VideoPage";
 import AllVideos from "./AllVideos";
 import Landing from "./Landing";
 
@@ -11,7 +11,7 @@ export {
     Home,
     Stream,
     Consume,
-    StreamPage,
+    VideoPage,
     AllVideos,
     Landing
 }

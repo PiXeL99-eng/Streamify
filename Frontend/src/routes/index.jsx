@@ -2,7 +2,7 @@ import React, {useState} from 'react'
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react"
 import { ProtectedRoute } from "./ProtectedRoute";
-import { Home, Test, Stream, Consume, StreamPage, AllVideos, Landing} from "../pages"
+import { Home, Test, Stream, Consume, VideoPage, AllVideos, Landing} from "../pages"
 
 const Routes = () => {
 
@@ -26,7 +26,7 @@ const Routes = () => {
     },
     {
       path: "/videopage",
-      element: < StreamPage profile = {profile} setProfile = {setProfile}/>,
+      element: < VideoPage profile = {profile} setProfile = {setProfile}/>,
     },
     {
       path: "/allvideos",
