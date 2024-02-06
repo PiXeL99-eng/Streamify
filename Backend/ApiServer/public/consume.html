@@ -4,6 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Consumer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #remoteVideoContainer {
+            margin-top: 20px;
+        }
+
+        .video {
+            width: 100%;
+            max-width: 640px;
+            border: 1px solid #ccc;
+        }
+
+    </style>
 </head>
 <body>
     <h1>Video Consumer</h1>
@@ -13,6 +41,7 @@
     <div id="remoteVideoContainer">
         <video id="remoteVideo" autoplay class="video"></video>
     </div>
+    <p id="viewersCount">Viewers: 0</p>
     <script src="./bundles/bundle2.js"></script>
 </body>
 </html>

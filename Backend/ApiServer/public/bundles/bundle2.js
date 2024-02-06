@@ -2717,6 +2717,11 @@ let socket
 let consumerTransport
 let consumer
 
+// Function to update the viewer count on the page
+const updateViewerCount = (viewers) => {
+    viewersCount.textContent = `Viewers: ${viewers}`;
+};
+
 const getRtpCapabilities = () => {
 
     socket.emit('getRtpCaps', (data) => {
@@ -2808,7 +2813,12 @@ const consumeStream = () => {
         socket.on("producer-closed", () => {
             consumerTransport.close();
             consumer.close();
-            remoteVideo.srcObject = new MediaStream();
+            remoteVideo.srcObject = null;
+            updateViewerCount(0)
+        })
+
+        socket.on("viewer-count", (viewers) => {
+            updateViewerCount(viewers)
         })
         console.log(`Consuming stream in room: ${roomId}`);
     } catch (error) {

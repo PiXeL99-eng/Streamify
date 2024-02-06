@@ -1,5 +1,5 @@
 const { decrypt, secureVideos } = require('../utils/encryption');
-const prisma = require("./data/db")
+const prisma = require("../data/db")
 
 const getAllVideos = async (req, res) => {
     const videos = await prisma.video.findMany({

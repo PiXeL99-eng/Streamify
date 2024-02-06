@@ -101,7 +101,7 @@ module.exports = class Room {
         })
         
         producer.on('transportclose', () => {
-            console.log('transport for this producer closed ')
+            // Transport for this producer closed 
             producer.close()
         })
 
@@ -145,6 +145,7 @@ module.exports = class Room {
                 cb({ params })
 
                 this.consumers.set(peerId,consumer);
+                this.updateViewerCount()
             }
         } catch (error) {
             console.log(error.message)
@@ -172,6 +173,7 @@ module.exports = class Room {
             // close the consumer 
             consumer.close()
             this.consumers.delete(peerId)
+            this.updateViewerCount()
         }
         
         // remove peer from room
@@ -182,5 +184,9 @@ module.exports = class Room {
         const isConsumer = this.consumers.has(peerId);
         this.removeConnections(peerId,isConsumer);
         return !isConsumer;
+    }
+
+    updateViewerCount() {
+        this.io.to(this.roomId).emit("viewer-count",this.consumers.size)
     }
 } 

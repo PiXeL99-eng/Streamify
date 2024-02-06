@@ -4,13 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Publisher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #localVideoContainer {
+            margin-top: 20px;
+        }
+
+        .video {
+            width: 100%;
+            max-width: 640px;
+            border: 1px solid #ccc;
+        }
+
+    </style>
 </head>
 <body>
     <h1>Video Publisher</h1>
     <button id="startStreamBtn">Start Stream</button>
+    <button id="startRecordingBtn">Start Recording</button>
+    <button id="stopStreamBtn">Stop Stream</button>
     <div id="localVideoContainer">
         <video id="localVideo" autoplay class="video"></video>
     </div>
+    <p id="viewersCount">Viewers: 0</p>
     <script src="./bundles/bundle1.js"></script>
 </body>
 </html>
+

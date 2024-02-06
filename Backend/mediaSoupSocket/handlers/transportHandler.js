@@ -4,16 +4,20 @@ const rooms = new Map()
 
 module.exports = (io, socket, workers) => {
 
-    const startStream = async (roomId, callback) => {
-        //socket.join(roomId);
+    const initiateRoom = (roomId) => {
+        socket.join(roomId);
         socket.roomId = roomId;
-        const room = await Room.createRouters(roomId, io, workers, socket.id)
+    }
+
+    const startStream = async (roomId, callback) => {
+        initiateRoom(roomId)
+        const room = await Room.createRouters(roomId, io, workers, socket.id);
         rooms.set(roomId,room);
         callback();
     }
 
     const joinRoom = (roomId, callback) => {
-        socket.roomId = roomId;
+        initiateRoom(roomId)
         rooms.get(roomId).addPeer(socket.id,false);
         callback();
     }
@@ -30,7 +34,6 @@ module.exports = (io, socket, workers) => {
     }
 
     const transportConnect = async ({ dtlsParameters }) => {
-        console.log('DTLS PARAMS... ', { dtlsParameters })
         await rooms.get(socket.roomId).transportConnect(socket.id, { dtlsParameters })
     }
 
@@ -43,7 +46,6 @@ module.exports = (io, socket, workers) => {
     }
 
     const resumeConsumer = async () => {
-        console.log('consumer resume')
         await rooms.get(socket.roomId).resumeConsuming(socket.id);
     }
 
@@ -60,7 +62,7 @@ module.exports = (io, socket, workers) => {
     socket.on('consumer-resume', resumeConsumer)
 
     socket.on('disconnect', () => {
-    // do some cleanup
+        // do some cleanup
         try{
             if(rooms.has(socket.roomId)){
                 const producerDisconnect = rooms.get(socket.roomId).disconnectPeer(socket.id);

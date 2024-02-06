@@ -19,7 +19,7 @@ const decrypt = (hash) => {
     return parseInt(decrypted.toString(), 10);
 };
 
-const secureVideos = (videos) => {
+const secureVideos = (res, statusCode, videos) => {
     const securedVideos = videos.map(video => {
         const videoID = video.videoId;
         video.videoId = encrypt(videoID);

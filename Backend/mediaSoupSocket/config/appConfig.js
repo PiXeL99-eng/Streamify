@@ -28,4 +28,7 @@ module.exports = {
           preferUdp: true,
         },
     },
+    chat : {
+      messageBuffer : 10,
+    },
 };

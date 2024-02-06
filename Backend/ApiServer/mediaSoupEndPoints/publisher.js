@@ -1,11 +1,19 @@
 const io = require('socket.io-client')
 const mediasoupClient = require('mediasoup-client')
+const { v4: uuidv4 } = require('uuid');
 
 const socket = io("ws://localhost:8900/live-video")
 
 let device
 let rtpCapabilities
 let producerTransport
+let streamId
+let recording = false
+
+// Function to update the viewer count on the page
+const updateViewerCount = (viewers) => {
+    viewersCount.textContent = `Viewers: ${viewers}`;
+};
 
 let params = {
     // mediasoup params
@@ -143,12 +151,13 @@ const connectSendTransport = async () => {
 
     producer.on('transportclose', () => {
         console.log('transport ended')
+        producer.close()
         // close transport
     })
 }
 
 const generateRoomId = () => {
-    const randomId = Math.random().toString(36).substring(7);
+    const randomId = uuidv4();
     return randomId;
 };
 
@@ -163,9 +172,56 @@ const startStream = async () => {
         });
 
         console.log(`Streaming started in room: ${roomId}`);
+        fetch("Streamify/newVideo",{
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                videoDesc : "new stream",
+                previewImageUrl: "/logoMarkv2.png",
+                live : true,
+                roomId : roomId,
+                userId : "1"
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            streamId = data[0].videoId;
+        })
     } catch (error) {
         console.error('Error accessing webcam:', error);
     }
 };
 
+socket.on("viewer-count", (viewers) => {
+    updateViewerCount(viewers)
+})
+
+const startRecording = () => {
+    // todo : send socket event
+    startRecordingBtn.disabled = true;
+}
+
+const stopStream = async () => {
+    if (recording) {
+        // send stop recording event and make put request
+        // upon receiving video url after upload
+    }
+    else {
+        socket.disconnect();
+        updateViewerCount(0);
+        producerTransport.close();
+        await fetch("Streamify/deleteVideo",{
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ videoID : streamId })
+        })
+    }   
+}
+
 document.getElementById('startStreamBtn').addEventListener('click', startStream);
+document.getElementById('startRecordingBtn').addEventListener('click', startRecording);
+document.getElementById('stopStreamBtn').addEventListener('click', stopStream)

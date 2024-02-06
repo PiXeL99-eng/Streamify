@@ -7,13 +7,13 @@ const videoRouter = require("./routes/videoRoutes")
 
 const app = express()
 
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ["*"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: "*",
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   })
 )
