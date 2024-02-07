@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="shortcut icon" href="#">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Publisher</title>
@@ -57,16 +56,51 @@
     <h1>Video Publisher</h1>
     <button id="startWebcamBtn">Start Webcam</button>
     <button id="startScreenShareBtn">Start Screen Share</button>
-    <button id="startRecordingBtn">Start Recording</button>
-    <button id="stopStreamBtn">Stop Stream</button>
     <div id="screenShareVideoContainer">
         <video id="screenShareVideo" autoplay class="video"></video>
         <div id="localVideoContainer">
             <video id="localVideo" autoplay class="video"></video>
         </div>
     </div>
-    <p id="viewersCount">Viewers: 0</p>
-    <script src="./bundles/bundle1.js"></script>
+    <p id="viewerCount">Viewers: 0</p>
+    <script>
+        const startStream = () => {
+            navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: {
+                    width : {
+                        min:100,
+                        max:100
+                    },
+                    height : {
+                        min:100,
+                        max:100
+                    }
+                }
+            })
+            .then(stream => { 
+                localVideo.srcObject = stream 
+            })
+            .catch(error => {
+                console.log(error.message)
+            })
+        }
+
+        const startScreenStream = () => {
+            navigator.mediaDevices.getDisplayMedia({
+                audio: true,
+                video: true
+            })
+            .then(stream => { 
+                screenShareVideo.srcObject = stream 
+            })
+            .catch(error => {
+                console.log(error.message)
+            })
+        }
+        document.getElementById('startWebcamBtn').addEventListener('click', startStream);
+        document.getElementById('startScreenShareBtn').addEventListener('click', startScreenStream);
+    </script>
 </body>
 </html>
 

@@ -28,9 +28,9 @@ module.exports = (io, socket, workers) => {
         callback({rtpCapabilities});
     }
 
-    const createWebRtcTransport = async (callback) => {
+    const createWebRtcTransport = async ({ consumer }, callback) => {
         const room = rooms.get(socket.roomId);
-        await room.createTransport(socket.id, callback);
+        await room.createTransport(socket.id, consumer, callback);
     }
 
     const transportConnect = async ({ dtlsParameters }) => {
@@ -38,15 +38,15 @@ module.exports = (io, socket, workers) => {
     }
 
     const transportProduce = async ({ kind, rtpParameters, appData }, callback) => {
-        await rooms.get(socket.roomId).createProducer(socket.id, kind, rtpParameters, callback);
+        await rooms.get(socket.roomId).createProducer(socket.id, kind, rtpParameters, appData, callback);
     }
 
-    const consume = async ({ rtpCapabilities }, callback) => {
-        await rooms.get(socket.roomId).consume(socket.id, rtpCapabilities, callback);
+    const consume = async ({ media, rtpCapabilities }, callback) => {
+        await rooms.get(socket.roomId).consume(socket.id, media, rtpCapabilities, callback);
     }
 
-    const resumeConsumer = async () => {
-        await rooms.get(socket.roomId).resumeConsuming(socket.id);
+    const resumeConsumer = async (media) => {
+        await rooms.get(socket.roomId).resumeConsuming(socket.id, media);
     }
 
     socket.on('startStream',startStream)

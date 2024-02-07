@@ -10,7 +10,7 @@ module.exports = class Room {
         this.peers = new Map();
         this.transports = new Map();
         this.consumers = new Map();
-        this.producer = null;
+        this.producers = new Map();
         this.routers = routers;
 
         if (streamerId !== null){
@@ -54,7 +54,7 @@ module.exports = class Room {
         return this.getRouter(peerId).rtpCapabilities;
     }
 
-    async createTransport(peerId, cb) {
+    async createTransport(peerId, consumer, cb) {
         try {
             const { webRtcTransport_options } = config.mediaSoup;
 
@@ -70,14 +70,19 @@ module.exports = class Room {
                 console.log('transport closed')
             })
 
-            cb({
-                params: {
+            let transportParams = {
+                params : {
                     id: transport.id,
                     iceParameters: transport.iceParameters,
                     iceCandidates: transport.iceCandidates,
                     dtlsParameters: transport.dtlsParameters,
                 }
-            })
+            }
+            if(consumer){
+                transportParams = { mediaSources: Array.from(this.producers.keys()), ...transportParams }
+            }
+
+            cb(transportParams)
             this.transports.set(peerId,transport)
 
         } catch (error) {
@@ -94,10 +99,11 @@ module.exports = class Room {
         await this.getTransport(peerId).connect(params);
     }
 
-    async createProducer(peerId, kind, rtpParameters, cb) {
+    async createProducer(peerId, kind, rtpParameters, appData, cb) {
         const producer = await this.getTransport(peerId).produce({
             kind,
             rtpParameters,
+            appData,
         })
         
         producer.on('transportclose', () => {
@@ -108,44 +114,56 @@ module.exports = class Room {
         cb({
             id: producer.id
         })
-        this.producer = producer;
+
+        this.producers.set(appData.mediaSource, producer);
+        this.io.to(this.roomId).emit("new-producer", appData.mediaSource);
     }
 
-    async consume(peerId, rtpCapabilities, cb) {
+    async consume(peerId, media, rtpCapabilities, cb) {
         const consumerTransport = this.getTransport(peerId);
         const router = this.getRouter(peerId);
+        const producer = this.producers.get(media)
         try {
             // check if the router can consume the specified producer
             if (router.canConsume({
-                producerId: this.producer.id,
+                producerId: producer.id,
                 rtpCapabilities
             })) {
                 const consumer = await consumerTransport.consume({
-                    producerId: this.producer.id,
+                    producerId: producer.id,
                     rtpCapabilities,
                     paused: true,
                 })
         
                 consumer.on('transportclose', () => {
                     console.log('transport close from consumer')
+                    consumer.close()
+                    this.consumers.delete(peerId)
+                    this.updateViewerCount()
                 })
         
                 consumer.on('producerclose', () => {
                     this.io.to(peerId).emit("producer-closed");
-                    this.removeConnections(peerId,true);
+                    this.removeConnections(peerId);
                 })
         
                 const params = {
                     id: consumer.id,
-                    producerId: this.producer.id,
+                    producerId: producer.id,
                     kind: consumer.kind,
                     rtpParameters: consumer.rtpParameters,
+                    appData : { mediaSource: media },
                 }
                 // send the parameters to the client
                 cb({ params })
 
-                this.consumers.set(peerId,consumer);
-                this.updateViewerCount()
+                if (this.consumers.has(peerId)) {
+                    this.consumers.get(peerId).set(media,consumer);
+                }
+                else {
+                    this.consumers.set(peerId, new Map([[media,consumer]]) );
+                    this.updateViewerCount()
+                }
             }
         } catch (error) {
             console.log(error.message)
@@ -157,24 +175,16 @@ module.exports = class Room {
         }
     }
 
-    async resumeConsuming(peerId) {
-        const consumer = this.consumers.get(peerId);
+    async resumeConsuming(peerId, media) {
+        const consumer = this.consumers.get(peerId).get(media);
         await consumer.resume();
     }
 
-    removeConnections(peerId, isConsumer) {
+    removeConnections(peerId) {
         const transport = this.getTransport(peerId);
         // close the peer transport
         transport.close()
         this.transports.delete(peerId)
-        
-        if(isConsumer){
-            const consumer = this.consumers.get(peerId);
-            // close the consumer 
-            consumer.close()
-            this.consumers.delete(peerId)
-            this.updateViewerCount()
-        }
         
         // remove peer from room
         this.peers.delete(peerId);
@@ -182,7 +192,7 @@ module.exports = class Room {
 
     disconnectPeer(peerId) {
         const isConsumer = this.consumers.has(peerId);
-        this.removeConnections(peerId,isConsumer);
+        this.removeConnections(peerId);
         return !isConsumer;
     }
 

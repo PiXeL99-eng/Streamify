@@ -2715,7 +2715,6 @@ let device
 let rtpCapabilities
 let socket
 let consumerTransport
-let consumer
 
 // Function to update the viewer count on the page
 const updateViewerCount = (viewers) => {
@@ -2750,7 +2749,7 @@ const createDevice = async () => {
 
 const createRecvTransport = async () => {
     
-    await socket.emit('createWebRtcTransport', ({ params }) => {
+    await socket.emit('createWebRtcTransport', { consumer: true }, ({ mediaSources, params }) => {
         if (params.error) {
             console.log(params.error)
         return
@@ -2773,32 +2772,58 @@ const createRecvTransport = async () => {
                 errback(error)
             }
         })
-        connectRecvTransport()
+        subscribeToMedia(mediaSources)
     })
 }
 
-const connectRecvTransport = async () => {
+const subscribeToMedia = (mediaSources) => {
+    mediaSources.forEach( media => connectRecvTransport(media) );
+}
 
-    await socket.emit('consume', { rtpCapabilities: device.rtpCapabilities, }, async ({ params }) => {
+const connectRecvTransport = async (media) => {
+
+    await socket.emit('consume', { media, rtpCapabilities: device.rtpCapabilities, }, async ({ params }) => {
         if (params.error) {
             console.log('Cannot Consume')
             return
         }
        
-        consumer = await consumerTransport.consume({
+        const consumer = await consumerTransport.consume({
             id: params.id,
             producerId: params.producerId,
             kind: params.kind,
-            rtpParameters: params.rtpParameters
+            rtpParameters: params.rtpParameters,
+            appData : params.appData,
         })
         // destructure and retrieve the video track from the producer
         const { track } = consumer
-        remoteVideo.srcObject = new MediaStream([track])
+        const mediaInfo = params.appData.mediaSource
+
+        if (params.kind == 'audio') {
+            if (mediaInfo == 'cam-audio') {
+                setMedia(document.getElementById("localAudio"), track)
+            }
+            else{
+                setMedia(document.getElementById("screenShareAudio"), track)
+            }
+        }
+        else {
+            if (mediaInfo == 'cam-video') {
+                setMedia(document.getElementById("localVideo"), track)
+            }
+            else{
+                setMedia(document.getElementById("screenShareVideo"), track)
+            }
+        }
 
         // the server consumer started with media paused
         // so we need to inform the server to resume
-        socket.emit('consumer-resume')
+        socket.emit('consumer-resume', mediaInfo)
     })
+}
+
+const setMedia = (container, track) => {
+    container.srcObject = new MediaStream([track])
 }
 
 const consumeStream = () => {
@@ -2810,10 +2835,16 @@ const consumeStream = () => {
             getRtpCapabilities()
         });
 
+        socket.on("new-producer", (mediaSource) => {
+            connectRecvTransport(mediaSource)
+        })
+
         socket.on("producer-closed", () => {
             consumerTransport.close();
-            consumer.close();
-            remoteVideo.srcObject = null;
+            localVidoe.srcObject = null;
+            localAudio.srcObject = null;
+            screenShareVideo.srcObject = null;
+            screenShareAudio.srcObject = null;
             updateViewerCount(0)
         })
 
