@@ -5,6 +5,7 @@ import Midbox from "./Midbox";
 import StreamChat from "./StreamChat";
 import StreamingBox from "./StreamingBox";
 import AllVideosGrid from "./AllVideosGrid";
+import AllPastStreamsGrid from "./AllPastStreamsGrid";
 
 export {
     VideoCam,
@@ -13,5 +14,6 @@ export {
     Midbox,
     StreamChat,
     StreamingBox,
-    AllVideosGrid
+    AllVideosGrid,
+    AllPastStreamsGrid
 }
