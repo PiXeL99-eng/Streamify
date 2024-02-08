@@ -7,6 +7,8 @@ import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
 import { FaVideo, FaUpload } from "react-icons/fa6"
 import { useNavigate } from "react-router-dom"
 import { startStream } from '../mediaSoupEndPoints'
+import { newVideo } from '../api/videoAPICalls'
+import { useAuth } from "@clerk/clerk-react"
 
 const Sidebar = (props) => {
 
@@ -167,19 +169,37 @@ const Recommended = () => {
 
 const StartNewStreamModal = (props) => {
 
-    const [videoTitle, setVideoTitle] = useState("")
-    const [videoDescription, setVideoDescription] = useState("")
+    const [videoDesc, setVideoDesc] = useState("")
     const navigate = useNavigate()
+    const { userId } = useAuth()
 
-    const startStreamingFunction = () => {
+    const startStreamingFunction = async () => {
 
         //API call to create new room
         // delay or loading screen
 
-        navigate("/videopage", {replace: true})
-        props.setProfile("streamer")
-        startStream()
-        props.onClose()
+        let roomId = await startStream()
+        roomId = "0c599d99-ec66-432e-b5fa-ebca022d654e"
+
+        const videoDetails = {
+            videoDesc: videoDesc,
+            videoUrl: "",
+            previewImageUrl: "yahoo.com",
+            live: true,
+            roomId: roomId,
+            userId: `${userId}`
+        }
+
+        const valid = await newVideo(videoDetails)
+
+        if (valid){
+            navigate("/videopage", {replace: true})
+            props.onClose()
+            props.setProfile("streamer")
+        }
+        else{
+            //error handling
+        }
     }
 
     return (
@@ -200,19 +220,12 @@ const StartNewStreamModal = (props) => {
                         </Box>
 
                         <Box>
-                            <FormLabel opacity={"0.7"}>Video Title</FormLabel>
-                            <Input
-                                size="md"
-                                border="1px solid #4c4c4c"
-                                onChange={event => setVideoTitle(event.currentTarget.value)}
-                            // variant='filled'
-                            />
                             <FormLabel marginTop={"2"} opacity={"0.7"}>Video Description</FormLabel>
                             <Input
                                 size="lg"
                                 border="1px solid #4c4c4c"
                                 // variant='filled'
-                                onChange={event => setVideoDescription(event.currentTarget.value)}
+                                onChange={event => setVideoDesc(event.currentTarget.value)}
                             />
 
                             <HStack spacing={"4"} marginTop={"4"}>
