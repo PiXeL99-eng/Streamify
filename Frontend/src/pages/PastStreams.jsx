@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { Container, Box, Button, HStack } from '@chakra-ui/react'
 import { Navbar, Sidebar, AllPastStreamsGrid} from '../components'
+import { useAuth } from '@clerk/clerk-react';
 
 const PastStreams = (props) => {
 
     const profile = props.profile
     const setProfile = props.setProfile
+    const { userId, isLoaded } = useAuth()
     
     return (
         <>

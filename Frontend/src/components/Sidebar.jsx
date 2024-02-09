@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, Icon, FormLabel, Divider } from '@chakra-ui/react'
 import { ArrowDownIcon } from '@chakra-ui/icons'
 import { SearchIcon, ChatIcon } from '@chakra-ui/icons'
@@ -8,7 +8,8 @@ import { FaVideo, FaUpload } from "react-icons/fa6"
 import { useNavigate } from "react-router-dom"
 import { startStream } from '../mediaSoupEndPoints'
 import { newVideo } from '../api/videoAPICalls'
-import { useAuth } from "@clerk/clerk-react"
+import { useAuth, useUser } from "@clerk/clerk-react"
+import UploadWidget from './UploadWidget'
 
 const Sidebar = (props) => {
 
@@ -169,9 +170,11 @@ const Recommended = () => {
 
 const StartNewStreamModal = (props) => {
 
-    const [videoDesc, setVideoDesc] = useState("")
+    const videoDesc = useRef()
     const navigate = useNavigate()
     const { userId } = useAuth()
+    const { user } = useUser()
+    const [imageUrl, setImageUrl] = useState("")
 
     const startStreamingFunction = async () => {
 
@@ -184,8 +187,8 @@ const StartNewStreamModal = (props) => {
         const videoDetails = {
             videoDesc: videoDesc,
             videoUrl: "",
-            previewImageUrl: "yahoo.com",
-            live: true,
+            previewImageUrl: imageUrl,
+            live: false,
             roomId: roomId,
             userId: `${userId}`
         }
@@ -212,12 +215,7 @@ const StartNewStreamModal = (props) => {
 
                     <HStack spacing={"5"}>
 
-                        <Box>
-                            <FormLabel opacity={"0.7"}>Preview Image</FormLabel>
-
-                            <Image src='https://bit.ly/dan-abramov' alt='Dan Abramov' />
-
-                        </Box>
+                        <UploadWidget setImageUrl={setImageUrl}/>
 
                         <Box>
                             <FormLabel marginTop={"2"} opacity={"0.7"}>Video Description</FormLabel>
@@ -225,7 +223,16 @@ const StartNewStreamModal = (props) => {
                                 size="lg"
                                 border="1px solid #4c4c4c"
                                 // variant='filled'
-                                onChange={event => setVideoDesc(event.currentTarget.value)}
+                                onChange={event => videoDesc.current = event.currentTarget.value}
+                            />
+
+                            <FormLabel marginTop={"2"} opacity={"0.7"}>Uploader Name</FormLabel>
+                            <Input
+                                size="lg"
+                                border="1px solid #4c4c4c"
+                                // variant='filled'
+                                disabled={true}
+                                value={user ? user.fullName: ""}
                             />
 
                             <HStack spacing={"4"} marginTop={"4"}>

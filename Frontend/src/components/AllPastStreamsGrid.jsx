@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Container, Box, Button, HStack, SimpleGrid, Avatar, VStack, Text, Card, CardHeader, CardBody, CardFooter, Image, Stack, Heading, Divider, ButtonGroup, IconButton, Tooltip } from '@chakra-ui/react'
 import { consumeStream } from '../mediaSoupEndPoints'
 import { useNavigate } from "react-router-dom"
@@ -13,78 +13,58 @@ import {
     MenuOptionGroup,
     MenuDivider,
 } from '@chakra-ui/react'
+import { getUserVideos, deleteVideo } from '../api/videoAPICalls';
+import { useAuth, useUser } from '@clerk/clerk-react';
 
-const AllVideosGrid = (props) => {
+const AllPastStreamsGrid = (props) => {
 
     const navigate = useNavigate()
+    const [videos, setVideos] = useState([])
+    const { userId, isLoaded } = useAuth()
+    const { user } = useUser();
 
-    const playStream = (roomID) => {
+    useEffect(() => {
 
-        // if a user is streaming, do not open let them open viewer page
-        // else he is viewer by default, so no problem
-        // navigate("/streampage", { replace: true })
-        // consumeStream(roomID)
+        getUserVideos(userId).then((data) => { setVideos(data) })
+
+    }, [userId])
+
+    const playStream = (videoId) => {
+
+        if (props.profile === "streamer"){
+            //error handling, can't open video when a streamer
+        }
+        else{
+            navigate("/videopage", { replace: true })
+            // fetch the video
+
+        }
 
     }
 
-    const deleteVideo = (videoID) => {
+    const deleteClickedVideo = (videoId) => {
 
-        // API call to delete stream
-        // navigate("/paststreams", { replace: true })
+        deleteVideo(videoId)
+        navigate("/paststreams", { replace: true })
 
     }
 
-    const editDesc = (videoID) => {
+    const editDesc = (videoId) => {
 
         //API to edit desc
-        // navigate("/paststreams", { replace: true })
+        navigate("/paststreams", { replace: true })
 
     }
 
-    const videos = [
-        {
-            image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
-            videoTitle: "42 wins loldfkjbfd",
-            userID: "codewithharry",
-            roomID: "166113",
-            videoID: "1315151"
-        },
-        {
-            image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
-            videoTitle: "42 wins loldfkjbfd",
-            userID: "codewithharry",
-            roomID: "166113",
-            videoID: "1315151"
-        },
-        {
-            image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
-            videoTitle: "42 wins loldfkjbfd",
-            userID: "codewithharry",
-            roomID: "166113",
-            videoID: "1315151"
-        },
-        {
-            image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
-            videoTitle: "42 wins loldfkjbfd",
-            userID: "codewithharry",
-            roomID: "166113",
-            videoID: "1315151"
-        },
-        {
-            image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
-            videoTitle: "42 wins loldfkjbfd",
-            userID: "codewithharry",
-            roomID: "166113",
-            videoID: "1315151"
-        },
-        {
-            image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
-            videoTitle: "42 wins loldfkjbfd",
-            userID: "codewithharry",
-            roomID: "166113",
-            videoID: "1315151"
-        },
-    ]
+    // const videos = [
+    //     {
+    //         image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
+    //         videoDesc: "42 wins loldfkjbfd",
+    //         userID: "codewithharry",
+    //         roomID: "166113",
+    //         videoID: "1315151"
+    //     },
+    // ]
 
     return (
         <>
@@ -98,60 +78,60 @@ const AllVideosGrid = (props) => {
                             return (
 
                                 <Box _hover={{ cursor: "pointer", boxShadow: "2px 3px 5px 2px #050505", borderRadius: "6px" }}
-                                // onClick={() => playStream(obj.roomID)}
+                                    position={"relative"}
                                 >
                                     <Card background={"transparent"}>
-                                        <CardBody padding={"2"}>
+                                        <Menu>
+                                            <MenuButton
+                                                position={"absolute"}
+                                                colorScheme='purple'
+                                                as={IconButton}
+                                                right={"12px"}
+                                                top={"12px"}
+                                                borderRadius='md'
+                                                icon={<BsThreeDotsVertical />}
+                                            />
+                                            <MenuList bgColor={"#222222"} color={"white"} minW={"11rem"}>
+                                                <MenuItem
+                                                    bgColor={"#222222"}
+                                                    _hover={{ bgColor: "#313131" }}
+                                                    onClick={() => editDesc(obj.videoId)}
+                                                >
+                                                    Edit Description
+                                                </MenuItem>
 
-                                            <Box position={"relative"}>
+                                                <MenuItem
+                                                    bgColor={"#222222"}
+                                                    _hover={{ bgColor: "#313131" }}
+                                                    onClick={() => deleteClickedVideo(obj.videoId)}
+                                                >
+                                                    Delete Stream
+                                                </MenuItem>
+                                                {/* <MenuDivider /> */}
+                                            </MenuList>
+                                        </Menu>
+                                        <CardBody padding={"2"} onClick={() => playStream(obj.videoId)}>
+
+                                            <Box>
                                                 <Image
-                                                    src={obj.image}
+                                                    src={"https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"}
                                                     alt='streamed or streaming video'
                                                     borderRadius='lg'
                                                 />
 
-                                                <Menu>
-                                                    <MenuButton
-                                                        position={"absolute"}
-                                                        colorScheme='purple'
-                                                        as={IconButton}
-                                                        right={"5px"}
-                                                        top={"5px"}
-                                                        borderRadius='md'
-                                                        icon={<BsThreeDotsVertical />}
-                                                    />
-                                                    <MenuList bgColor={"#222222"} color={"white"} minW={"11rem"}>
-                                                        <MenuItem 
-                                                        bgColor={"#222222"} 
-                                                        _hover={{bgColor: "#313131"}}
-                                                        onClick={() => editDesc(obj.videoID)}
-                                                        >
-                                                            Edit Description
-                                                        </MenuItem>
-
-                                                        <MenuItem 
-                                                        bgColor={"#222222"} 
-                                                        _hover={{bgColor: "#313131"}}
-                                                        onClick={() => deleteVideo(obj.videoID)}
-                                                        >
-                                                            Delete Stream
-                                                        </MenuItem>
-                                                        {/* <MenuDivider /> */}
-                                                    </MenuList>
-                                                </Menu>
 
                                             </Box>
 
                                             <HStack width={"100%"} spacing={"3"} mt={"2"}>
                                                 <Box>
-                                                    <Avatar name='Dan Abrahmov' src='https://bit.ly/dan-abramov' boxSize={"10"} />
+                                                    <Avatar name='Dan Abrahmov' src={user.imageUrl} boxSize={"10"} />
                                                 </Box>
 
                                                 <Box >
                                                     <VStack width={"100%"} alignItems={"left"} spacing={"0"}>
 
-                                                        <Text as={"b"} color={"white"}>{obj.videoTitle}</Text>
-                                                        <Text color={"grey"} fontSize={"sm"}>{obj.userID} ☑</Text>
+                                                        <Text as={"b"} color={"white"}>{obj.videoDesc}</Text>
+                                                        <Text color={"grey"} fontSize={"sm"}>{user.fullName} ☑</Text>
 
                                                     </VStack>
                                                 </Box>
@@ -170,4 +150,4 @@ const AllVideosGrid = (props) => {
 }
 
 
-export default AllVideosGrid
+export default AllPastStreamsGrid
