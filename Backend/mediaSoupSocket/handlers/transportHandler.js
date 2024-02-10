@@ -49,20 +49,7 @@ module.exports = (io, socket, workers) => {
         await rooms.get(socket.roomId).resumeConsuming(socket.id, media);
     }
 
-    socket.on('startStream',startStream)
-    socket.on('JoinRoom', joinRoom)
-    
-    socket.on('getRtpCaps', getRtpCaps)
-    socket.on('createWebRtcTransport', createWebRtcTransport)
-
-    socket.on('transport-connect', transportConnect)
-    socket.on('transport-produce', transportProduce)
-    
-    socket.on('consume', consume)
-    socket.on('consumer-resume', resumeConsumer)
-
-    socket.on('disconnect', () => {
-        // do some cleanup
+    const disconnectPeer = () => {
         try{
             if(rooms.has(socket.roomId)){
                 const producerDisconnect = rooms.get(socket.roomId).disconnectPeer(socket.id);
@@ -77,5 +64,19 @@ module.exports = (io, socket, workers) => {
         } catch(err) {
             console.log("Error occured");
         }
-    })
+    }
+
+    socket.on('startStream',startStream)
+    socket.on('JoinRoom', joinRoom)
+    
+    socket.on('getRtpCaps', getRtpCaps)
+    socket.on('createWebRtcTransport', createWebRtcTransport)
+
+    socket.on('transport-connect', transportConnect)
+    socket.on('transport-produce', transportProduce)
+    
+    socket.on('consume', consume)
+    socket.on('consumer-resume', resumeConsumer)
+
+    socket.on('disconnect', disconnectPeer)
 }
