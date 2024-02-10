@@ -10,6 +10,6 @@ router.post("/newVideo", newStream)
 
 router.put("/updateVideo", updateStream)
 
-router.delete("/deleteVideo", deleteVideo)
+router.delete("/deleteVideo/:Id", deleteVideo)
 
 module.exports = router;

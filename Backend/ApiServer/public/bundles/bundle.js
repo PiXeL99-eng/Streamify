@@ -4,13 +4,15 @@ const videoGallery = document.getElementById('videoGallery');
 // Function to fetch video data from the backend
 const fetchVideos = async () => {
     try {
-        const response = await fetch('Streamify/allvideos');
-        const videos = await response.json();
-
+        const response = await fetch('streamify/allvideos');
+        const userVideos = await response.json();
+        console.log(userVideos)
         // Display video boxes in the gallery
-        videos.forEach(video => {
-            const videoBox = createVideoBox(video);
-            videoGallery.appendChild(videoBox);
+        userVideos.forEach(videoInfo => {
+            videoInfo.videos.forEach(video => {
+                const videoBox = createVideoBox(video);
+                videoGallery.appendChild(videoBox);
+            });
         });
     } catch (error) {
         console.error('Error fetching videos:', error);

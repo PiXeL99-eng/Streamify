@@ -1,31 +1,25 @@
-const crypto = require('crypto');
-const ALGORITHM = 'aes-256-ctr';
-const SECRET_KEY = crypto.randomBytes(32).toString('hex');
+require("dotenv").config({path : '../.env'});
 
-const encrypt = (videoId) => {
-    const text = videoId.toString();
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(SECRET_KEY, 'hex'), iv);
-    const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
-    return {
-        iv: iv.toString('hex'),
-        content: encrypted.toString('hex'),
-    };
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = process.env.ENCRYPTION_SECRET_KEY;
+
+const encrypt = (objectId) => {
+    const token = jwt.sign({id : objectId}, SECRET_KEY);
+    return token;
 };
 
-const decrypt = (hash) => {
-    const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(SECRET_KEY, 'hex'), Buffer.from(hash.iv, 'hex'));
-    const decrypted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
-    return parseInt(decrypted.toString(), 10);
-};
+const decrypt = (token) => {
+    const decodedId = jwt.verify(token,SECRET_KEY);
+    return decodedId.id;
+}
 
-const secureVideos = (res, statusCode, videos) => {
-    const securedVideos = videos.map(video => {
+const secureVideos = (res, statusCode, userVideos) => {
+    userVideos.videos.map(video => {
         const videoID = video.videoId;
         video.videoId = encrypt(videoID);
         return video;
     })
-    res.status(statusCode).json(securedVideos);
+    res.status(statusCode).json(userVideos);
 }
 
 module.exports = { encrypt, decrypt, secureVideos };

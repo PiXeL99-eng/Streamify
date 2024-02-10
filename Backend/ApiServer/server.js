@@ -17,7 +17,7 @@ app.use(
     credentials: true,
   })
 )
-app.use("/Streamify",videoRouter);
+app.use("/streamify",videoRouter);
 
 
 app.get('/stream', (req, res) => {

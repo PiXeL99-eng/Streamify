@@ -2935,7 +2935,7 @@ const generateRoomId = (getStream) => {
         });
         console.log(`Streaming started in room: ${roomId}`);
         
-        fetch("Streamify/newVideo",{
+        fetch("streamify/newVideo",{
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -2945,12 +2945,12 @@ const generateRoomId = (getStream) => {
                 previewImageUrl: "/logoMarkv2.png",
                 live : true,
                 roomId : roomId,
-                userId : "1"
+                authorId : 1,
             })
         })
         .then(res => res.json())
         .then(data => {
-            streamId = data[0].videoId;
+            streamId = data.videos[0].videoId;
         })
     } catch (error) {
         console.error('Error accessing webcam:', error);
@@ -2975,12 +2975,11 @@ const stopStream = async () => {
         socket.disconnect();
         updateViewerCount(0);
         producerTransport.close();
-        await fetch("Streamify/deleteVideo",{
+        await fetch(`streamify/deleteVideo/${streamId}`,{
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ videoID : streamId })
         })
     }   
 }
@@ -2993,8 +2992,14 @@ const startScreenStream = () => {
     generateRoomId(getLocalScreen);
 }
 
+const startStream = () => {
+    startCam()
+    setTimeout(() => {startScreenStream()}, 2000);
+}
+
 document.getElementById('startWebcamBtn').addEventListener('click', startCam);
 document.getElementById('startScreenShareBtn').addEventListener('click', startScreenStream)
+document.getElementById('startStreamBtn').addEventListener('click', startStream)
 document.getElementById('startRecordingBtn').addEventListener('click', startRecording);
 document.getElementById('stopStreamBtn').addEventListener('click', stopStream)
 

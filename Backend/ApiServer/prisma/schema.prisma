@@ -7,12 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model video {
+model User {
+  id             Int     @id @default(autoincrement())
+  userName       String  @unique
+  userPreviewUrl String? @db.Text
+  videos         Video[]
+}
+
+model Video {
   videoId         Int     @id @default(autoincrement())
-  videoDesc       String
-  videoUrl        String  @db.Text
+  videoDesc       String?
+  videoUrl        String? @db.Text
   previewImageUrl String  @db.Text
   live            Boolean
   roomId          String  @db.Uuid
-  userId          String
+  author          User    @relation(fields: [authorId], references: [id])
+  authorId        Int
 }

@@ -2,36 +2,71 @@ const { decrypt, secureVideos } = require('../utils/encryption');
 const prisma = require("../data/db")
 
 const getAllVideos = async (req, res) => {
-    const videos = await prisma.video.findMany({
+    const query = req.query.search ? req.query.search : "";
+
+    const videos = await prisma.user.findMany({
+        // include : {
+        //     videos : {
+        //         where : {
+        //             videoDesc : {
+        //                 contains : query,
+        //             }
+        //         },
+        //         select : {
+        //             videoDesc : true,
+        //             videoUrl : true,
+        //             previewImageUrl : true,
+        //             live : true,
+        //             roomId : true
+        //         }
+        //     }
+        // },
         select : {
-            videoDesc : true,
-            videoUrl : true,
-            previewImageUrl : true,
-            live : true,
-            roomId : true
+            userName : true,
+            userPreviewUrl : true,
+            videos : {
+                where : {
+                    videoDesc : {
+                        contains : query,
+                    }
+                },
+                select : {
+                    videoDesc : true,
+                    videoUrl : true,
+                    previewImageUrl : true,
+                    live : true,
+                    roomId : true
+                }
+            }
         }
     });
-
+    // videos.map(video => delete video["id"]);
     res.status(200).json(videos);
 }
 
 const pastStreams = async (req, res) => {
     try {
-        const userID = req.params.userId;
-        const userVideos = await prisma.video.findMany({
-            // filter out live videos
-            where: {
-                userId : userID,
-                live : false
+        const userID = parseInt(req.params.userId);
+        const userVideos = await prisma.user.findUnique({
+            where : { 
+                id : userID,
             },
-            select : {
-                videoId: true,
-                videoDesc : true,
-                videoUrl : true,
-                previewImageUrl : true,
-            }
+            include : {
+                videos : {
+                    // Filter for non-live posts
+                    where : { 
+                        live : false 
+                    }, 
+                    select : { 
+                        videoId: true,
+                        videoDesc : true,
+                        videoUrl : true,
+                        previewImageUrl : true,
+                    },
+                },
+            },
         });
-
+        delete userVideos["id"];
         secureVideos(res, 200, userVideos);
     } catch (error) {
         console.error(error);
@@ -41,7 +76,7 @@ const pastStreams = async (req, res) => {
 
 const newStream = async (req, res) => {
     try {
-        const { videoDesc, previewImageUrl, live, roomId, userId } = req.body;
+        const { videoDesc, previewImageUrl, live, roomId, authorId } = req.body;
         const videoUrl = "";
         
         const newVideo = await prisma.video.create({
@@ -51,7 +86,7 @@ const newStream = async (req, res) => {
                 previewImageUrl,
                 live,
                 roomId,
-                userId,
+                authorId,
             },
             select : {
                 videoId: true,
@@ -59,7 +94,7 @@ const newStream = async (req, res) => {
             }
         });
         
-        secureVideos(res, 201, [newVideo]);
+        secureVideos(res, 201, {"videos" : [newVideo]});
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
@@ -92,7 +127,7 @@ const updateStream = async (req, res) => {
 
 const deleteVideo = async (req, res) => {
     try {
-        const { videoID } = req.body;
+        const videoID = req.params.Id;
     
         const decryptedVideoID = decrypt(videoID);
         await prisma.video.delete({

@@ -135,7 +135,7 @@ const consumeStream = () => {
 
         socket.on("producer-closed", () => {
             consumerTransport.close();
-            localVidoe.srcObject = null;
+            localVideo.srcObject = null;
             localAudio.srcObject = null;
             screenShareVideo.srcObject = null;
             screenShareAudio.srcObject = null;
