@@ -166,8 +166,11 @@ const startStream = async () => {
         });
 
         console.log(`Streaming started in room: ${roomId}`);
+        return `${roomId}`
+        
     } catch (error) {
         console.error('Error accessing webcam:', error);
+        return ""
     }
 };
 

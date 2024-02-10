@@ -1,16 +1,54 @@
-import React from 'react'
-import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, Icon } from '@chakra-ui/react'
+import React, { useState, useRef } from 'react'
+import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, Icon, FormLabel, Divider } from '@chakra-ui/react'
 import { ArrowDownIcon } from '@chakra-ui/icons'
+import { SearchIcon, ChatIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure } from '@chakra-ui/react'
+import { FaVideo, FaUpload } from "react-icons/fa6"
+import { useNavigate } from "react-router-dom"
+import { startStream } from '../mediaSoupEndPoints'
+import { newVideo } from '../api/videoAPICalls'
+import { useAuth, useUser } from "@clerk/clerk-react"
+import UploadWidget from './UploadWidget'
 
-const Sidebar = () => {
+const Sidebar = (props) => {
+
+    const { isOpen, onOpen, onClose } = useDisclosure()
+    const navigate = useNavigate()
+
+    const openPastStreams = () => {
+        navigate("/paststreams", { replace: true })
+    }
+
     return (
         <>
             <Box width={"20%"} background={"#1f2029"} color={"white"} height={"100%"}>
 
+                <StartNewStreamModal isOpen={isOpen} onOpen={onOpen} onClose={onClose} setProfile={props.setProfile} />
+
                 <VStack>
 
                     <ForYou />
+
+                    <VStack width={"100%"} paddingX={"5"} paddingBottom={"3"} alignItems={"flex-start"}>
+
+                        <Button
+                            onClick={onOpen}
+                            colorScheme='pink'
+                            isDisabled={props.profile === "streamer" ? true : false}
+                            variant='outline'
+                        >
+                            Start New Stream 📽
+                        </Button>
+
+                        <Divider marginY={"2"}/>
+
+                        <Box width={"100%"} borderRadius={"7px"} background={"#272831"} padding={"14px"} onClick={openPastStreams} _hover={{cursor: "pointer"}}>
+                            View Past Streams
+                        </Box>
+
+                    </VStack>
+
 
                     <Following />
 
@@ -45,7 +83,7 @@ const Following = () => {
                     Following
                 </Text>
 
-                <VStack  width={"100%"} justifyContent={"space-between"} spacing={"4"}>
+                <VStack width={"100%"} justifyContent={"space-between"} spacing={"4"}>
                     <HStack width={"100%"} justifyContent={"space-between"} borderRadius={"7px"} background={"#272831"} padding={"8px"}>
                         <Image
                             borderRadius='full'
@@ -60,7 +98,7 @@ const Following = () => {
                             LIVE
                         </Button>
                     </HStack>
-                    <HStack width={"100%"} justifyContent={"space-between"}  borderRadius={"7px"} padding={"8px"}>
+                    <HStack width={"100%"} justifyContent={"space-between"} borderRadius={"7px"} padding={"8px"}>
                         <Image
                             borderRadius='full'
                             boxSize='32px'
@@ -127,6 +165,92 @@ const Recommended = () => {
                 </VStack>
             </VStack>
         </>
+    )
+}
+
+const StartNewStreamModal = (props) => {
+
+    const videoDesc = useRef()
+    const navigate = useNavigate()
+    const { userId } = useAuth()
+    const { user } = useUser()
+    const [imageUrl, setImageUrl] = useState("")
+
+    const startStreamingFunction = async () => {
+
+        //API call to create new room
+        // delay or loading screen
+
+        let roomId = await startStream()
+        roomId = "0c599d99-ec66-432e-b5fa-ebca022d654e"
+
+        const videoDetails = {
+            videoDesc: videoDesc,
+            videoUrl: "",
+            previewImageUrl: imageUrl,
+            live: false,
+            roomId: roomId,
+            userId: `${userId}`
+        }
+
+        const valid = await newVideo(videoDetails)
+
+        if (valid){
+            navigate("/videopage", {replace: true})
+            props.onClose()
+            props.setProfile("streamer")
+        }
+        else{
+            //error handling
+        }
+    }
+
+    return (
+        <Modal isOpen={props.isOpen} onClose={props.onClose}>
+            <ModalOverlay />
+            <ModalContent background={"#2d2d2d"} color={"white"} marginTop={"20"} border={"2px solid #ffffff24"}>
+                <ModalHeader>Your Stream Details</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+
+                    <HStack spacing={"5"}>
+
+                        <UploadWidget setImageUrl={setImageUrl}/>
+
+                        <Box>
+                            <FormLabel marginTop={"2"} opacity={"0.7"}>Video Description</FormLabel>
+                            <Input
+                                size="lg"
+                                border="1px solid #4c4c4c"
+                                // variant='filled'
+                                onChange={event => videoDesc.current = event.currentTarget.value}
+                            />
+
+                            <FormLabel marginTop={"2"} opacity={"0.7"}>Uploader Name</FormLabel>
+                            <Input
+                                size="lg"
+                                border="1px solid #4c4c4c"
+                                // variant='filled'
+                                disabled={true}
+                                value={user ? user.fullName: ""}
+                            />
+
+                            <HStack spacing={"4"} marginTop={"4"}>
+                                <Box border={"2px solid transparent"} borderRadius={"5"} background={"#33763c"} padding={"1.5"}><FaUpload size={"28"} /></Box>
+                                <Box border={"2px solid transparent"} borderRadius={"5"} background={"#33763c"} padding={"1.5"}><ChatIcon boxSize={"7"} /></Box>
+                                <Box border={"2px solid transparent"} borderRadius={"5"} background={"#33763c"} padding={"1.5"}><FaVideo size={"28"} /></Box>
+                            </HStack>
+                        </Box>
+                    </HStack>
+                </ModalBody>
+
+                <ModalFooter justifyContent={"center"}>
+                    <Button colorScheme='blue' mr={3} onClick={startStreamingFunction}>
+                        Start Stream ▶
+                    </Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
     )
 }
 
