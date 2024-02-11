@@ -46,10 +46,10 @@ const pastStreams = async (req, res) => {
                         videoUrl : true,
                         previewImageUrl : true,
                     },
+                    orderBy : {
+                        createdAt : 'desc',
+                    }
                 },
-                orderBy : {
-                    createdAt : 'desc',
-                }
             },
         });
         delete userVideos["id"];
