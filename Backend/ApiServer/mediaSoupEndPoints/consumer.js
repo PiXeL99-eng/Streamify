@@ -95,7 +95,7 @@ const connectRecvTransport = async (media) => {
 
         if (params.kind == 'audio') {
             if (mediaInfo == 'cam-audio') {
-                setMedia(remoteVideo, track)
+                setMedia(remoteAudio, track)
             }
             else{
                 setMedia(remoteScreenShareAudio, track)
