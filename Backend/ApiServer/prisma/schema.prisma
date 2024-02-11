@@ -15,12 +15,13 @@ model User {
 }
 
 model Video {
-  videoId         Int     @id @default(autoincrement())
+  videoId         Int      @id @default(autoincrement())
   videoDesc       String?
-  videoUrl        String? @db.Text
-  previewImageUrl String  @db.Text
+  videoUrl        String?  @db.Text
+  previewImageUrl String   @db.Text
   live            Boolean
-  roomId          String  @db.Uuid
-  author          User    @relation(fields: [authorId], references: [id])
+  roomId          String   @db.Uuid
+  author          User     @relation(fields: [authorId], references: [id])
   authorId        Int
+  createdAt       DateTime @default(now())
 }

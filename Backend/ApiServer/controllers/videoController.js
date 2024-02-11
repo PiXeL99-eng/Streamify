@@ -4,43 +4,26 @@ const prisma = require("../data/db")
 const getAllVideos = async (req, res) => {
     const query = req.query.search ? req.query.search : "";
 
-    const videos = await prisma.user.findMany({
-        // include : {
-        //     videos : {
-        //         where : {
-        //             videoDesc : {
-        //                 contains : query,
-        //             }
-        //         },
-        //         select : {
-        //             videoDesc : true,
-        //             videoUrl : true,
-        //             previewImageUrl : true,
-        //             live : true,
-        //             roomId : true
-        //         }
-        //     }
-        // },
+    const videos = await prisma.video.findMany({
+        where : {
+            videoDesc : {
+                contains : query,
+            }
+        },
         select : {
-            userName : true,
-            userPreviewUrl : true,
-            videos : {
-                where : {
-                    videoDesc : {
-                        contains : query,
-                    }
-                },
+            videoDesc : true,
+            videoUrl : true,
+            previewImageUrl : true,
+            live : true,
+            roomId : true,
+            author : {
                 select : {
-                    videoDesc : true,
-                    videoUrl : true,
-                    previewImageUrl : true,
-                    live : true,
-                    roomId : true
+                    userName : true,
+                    userPreviewUrl : true,
                 }
             }
-        }
+        },
     });
-    // videos.map(video => delete video["id"]);
     res.status(200).json(videos);
 }
 
@@ -64,6 +47,9 @@ const pastStreams = async (req, res) => {
                         previewImageUrl : true,
                     },
                 },
+                orderBy : {
+                    createdAt : 'desc',
+                }
             },
         });
         delete userVideos["id"];
