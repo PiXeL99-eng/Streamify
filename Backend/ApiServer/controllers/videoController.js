@@ -29,7 +29,7 @@ const getAllVideos = async (req, res) => {
 
 const pastStreams = async (req, res) => {
     try {
-        const userID = parseInt(req.params.userId);
+        const userID = req.params.userId;
         const userVideos = await prisma.user.findUnique({
             where : { 
                 id : userID,
@@ -76,7 +76,6 @@ const newStream = async (req, res) => {
             },
             select : {
                 videoId: true,
-                roomId : true
             }
         });
         
@@ -89,11 +88,13 @@ const newStream = async (req, res) => {
 
 const updateStream = async (req, res) => {
     try{
-        // updateInfo should be a object of form - 
-        // {
-        //    videoDesc : "..",
-        //    videoUrl  : "..", 
-        //    ....,
+        // updateInfo should be a object in the frontend APi call
+        // body : {
+        //     videoID : "...",
+        //     updateInfo : {
+        //         videoDesc : "...",
+        //         videoUrl : "...",
+        //     }
         // }
         const { videoID, updateInfo } = req.body;
 

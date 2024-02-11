@@ -2945,7 +2945,7 @@ const generateRoomId = (getStream) => {
                 previewImageUrl: "/logoMarkv2.png",
                 live : true,
                 roomId : roomId,
-                authorId : 1,
+                authorId : "1",
             })
         })
         .then(res => res.json())

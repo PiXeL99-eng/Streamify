@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id             Int     @id @default(autoincrement())
+  id             String  @id
   userName       String  @unique
   userPreviewUrl String? @db.Text
   videos         Video[]
@@ -22,6 +22,6 @@ model Video {
   live            Boolean
   roomId          String   @db.Uuid
   author          User     @relation(fields: [authorId], references: [id])
-  authorId        Int
+  authorId        String
   createdAt       DateTime @default(now())
 }

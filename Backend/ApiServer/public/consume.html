@@ -24,14 +24,14 @@
             cursor: pointer;
         }
 
-        #screenShareVideoContainer {
+        #remoteScreenShareVideoContainer {
             position: relative;
             width: 100%;
             max-width: 640px;
             margin-top: 20px;
         }
 
-        #localVideoContainer {
+        #remoteVideoContainer {
             position: absolute;
             top: 60%;
             left: 0;
@@ -58,12 +58,12 @@
     <label for="roomIdInput">Enter Room ID:</label>
     <input type="text" id="roomIdInput" placeholder="Enter Room ID">
     <button id="consumeBtn">Consume</button>
-    <div id="screenShareVideoContainer">
-        <video id="screenShareVideo" autoplay class="video"></video>
-        <audio id="screenShareAudio" autoplay></audio>
-        <div id="localVideoContainer">
-            <video id="localVideo" autoplay class="video"></video>
-            <audio id="localAudio" autoplay></audio>
+    <div id="remoteScreenShareVideoContainer">
+        <video id="remoteScreenShareVideo" autoplay class="video"></video>
+        <audio id="remoteScreenShareAudio" autoplay></audio>
+        <div id="remoteVideoContainer">
+            <video id="remoteVideo" autoplay class="video"></video>
+            <audio id="remoteAudio" autoplay></audio>
         </div>
     </div>
     <p id="viewersCount">Viewers: 0</p>

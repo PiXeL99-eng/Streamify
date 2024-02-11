@@ -2801,18 +2801,18 @@ const connectRecvTransport = async (media) => {
 
         if (params.kind == 'audio') {
             if (mediaInfo == 'cam-audio') {
-                setMedia(document.getElementById("localAudio"), track)
+                setMedia(remoteVideo, track)
             }
             else{
-                setMedia(document.getElementById("screenShareAudio"), track)
+                setMedia(remoteScreenShareAudio, track)
             }
         }
         else {
             if (mediaInfo == 'cam-video') {
-                setMedia(document.getElementById("localVideo"), track)
+                setMedia(remoteVideo, track)
             }
             else{
-                setMedia(document.getElementById("screenShareVideo"), track)
+                setMedia(remoteScreenShareVideo, track)
             }
         }
 
@@ -2841,10 +2841,10 @@ const consumeStream = () => {
 
         socket.on("producer-closed", () => {
             consumerTransport.close();
-            localVideo.srcObject = null;
-            localAudio.srcObject = null;
-            screenShareVideo.srcObject = null;
-            screenShareAudio.srcObject = null;
+            remoteVideo.srcObject = null;
+            remoteAudio.srcObject = null;
+            remoteScreenShareVideo.srcObject = null;
+            remoteScreenShareAudio.srcObject = null;
             updateViewerCount(0)
         })
 
