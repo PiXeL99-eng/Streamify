@@ -1,19 +1,15 @@
-// const io = require('socket.io-client')
 import { io } from 'socket.io-client'
-// const mediasoupClient = require('mediasoup-client')
 import * as mediasoupClient from "mediasoup-client"
-
-// const generateRoomId = () => {
-//     return document.getElementById('roomIdInput').value;
-// };
-
-// const socket = io("/live-video")
 
 let device
 let rtpCapabilities
 let socket
 let consumerTransport
-let consumer
+
+// Function to update the viewer count on the page
+const updateViewerCount = (viewers) => {
+    viewersCount.textContent = `👀 ${viewers} viewers`;
+};
 
 const getRtpCapabilities = () => {
 
@@ -43,7 +39,7 @@ const createDevice = async () => {
 
 const createRecvTransport = async () => {
     
-    await socket.emit('createWebRtcTransport', ({ params }) => {
+    await socket.emit('createWebRtcTransport', { consumer: true }, ({ mediaSources, params }) => {
         if (params.error) {
             console.log(params.error)
         return
@@ -66,36 +62,61 @@ const createRecvTransport = async () => {
                 errback(error)
             }
         })
-        connectRecvTransport()
+        subscribeToMedia(mediaSources)
     })
 }
 
-const connectRecvTransport = async () => {
+const subscribeToMedia = (mediaSources) => {
+    mediaSources.forEach( media => connectRecvTransport(media) );
+}
 
-    await socket.emit('consume', { rtpCapabilities: device.rtpCapabilities, }, async ({ params }) => {
+const connectRecvTransport = async (media) => {
+
+    await socket.emit('consume', { media, rtpCapabilities: device.rtpCapabilities, }, async ({ params }) => {
         if (params.error) {
             console.log('Cannot Consume')
             return
         }
        
-        consumer = await consumerTransport.consume({
+        const consumer = await consumerTransport.consume({
             id: params.id,
             producerId: params.producerId,
             kind: params.kind,
-            rtpParameters: params.rtpParameters
+            rtpParameters: params.rtpParameters,
+            appData : params.appData,
         })
         // destructure and retrieve the video track from the producer
         const { track } = consumer
-        remoteVideo.srcObject = new MediaStream([track])
+        const mediaInfo = params.appData.mediaSource
+
+        if (params.kind == 'audio') {
+            if (mediaInfo == 'cam-audio') {
+                setMedia(remoteAudio, track)
+            }
+            else{
+                setMedia(remoteScreenShareAudio, track)
+            }
+        }
+        else {
+            if (mediaInfo == 'cam-video') {
+                setMedia(remoteVideo, track)
+            }
+            else{
+                setMedia(remoteScreenShareVideo, track)
+            }
+        }
 
         // the server consumer started with media paused
         // so we need to inform the server to resume
-        socket.emit('consumer-resume')
+        socket.emit('consumer-resume', mediaInfo)
     })
 }
 
-const consumeStream = (inputRoomID) => {
-    const roomId = inputRoomID;
+const setMedia = (container, track) => {
+    container.srcObject = new MediaStream([track])
+}
+
+const consumeStream = (roomId) => {
     socket = io("ws://localhost:8900/live-video")
 
     try {
@@ -103,10 +124,21 @@ const consumeStream = (inputRoomID) => {
             getRtpCapabilities()
         });
 
+        socket.on("new-producer", (mediaSource) => {
+            connectRecvTransport(mediaSource)
+        })
+
         socket.on("producer-closed", () => {
             consumerTransport.close();
-            consumer.close();
-            remoteVideo.srcObject = new MediaStream();
+            remoteVideo.srcObject = null;
+            remoteAudio.srcObject = null;
+            remoteScreenShareVideo.srcObject = null;
+            remoteScreenShareAudio.srcObject = null;
+            updateViewerCount(0)
+        })
+
+        socket.on("viewer-count", (viewers) => {
+            updateViewerCount(viewers)
         })
         console.log(`Consuming stream in room: ${roomId}`);
     } catch (error) {

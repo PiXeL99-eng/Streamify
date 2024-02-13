@@ -9,12 +9,19 @@ const AllVideosGrid = (props) => {
     const navigate = useNavigate()
     const [videos, setVideos] = useState([])
 
-    const playStream = (roomId, live, videoUrl) => {
+    const playStream = (obj) => {
 
         // if a user is streaming, do not open let them open viewer page
         // else he is viewer by default, so no problem
-        navigate("/streampage", { replace: true })
-        consumeStream(roomId)
+        props.setViewVideoDetails({
+            videoDesc: obj.videoDesc,
+            videoUrl: obj.videoUrl,
+            previewImageUrl: obj.previewImageUrl,
+            author: obj.author
+        })
+        
+        consumeStream(obj.roomId)
+        navigate("/videopage", { replace: true })
 
     }
 
@@ -44,25 +51,27 @@ const AllVideosGrid = (props) => {
 
                             return (
 
-                                <Box _hover={{cursor: "pointer", boxShadow: "2px 3px 5px 2px #050505", borderRadius: "6px"}} onClick={() => playStream(obj.roomId, obj.live, obj.videoUrl)}>
+                                <Box _hover={{cursor: "pointer", boxShadow: "2px 3px 5px 2px #050505", borderRadius: "6px"}} onClick={() => playStream(obj)}>
                                     <Card background={"transparent"}>
                                         <CardBody padding={"2"}>
                                             <Image
-                                                src={"https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"}
+                                                src={obj.previewImageUrl}
                                                 alt='streamed or streaming video'
                                                 borderRadius='lg'
+                                                height={"11rem"}
+                                                width={"17rem"}
                                             />
 
                                             <HStack width={"100%"} spacing={"3"} mt={"2"}>
                                                 <Box>
-                                                    <Avatar name='Dan Abrahmov' src='https://bit.ly/dan-abramov' boxSize={"10"} />
+                                                    <Avatar name='Dan Abrahmov' src={obj.author.userPreviewUrl} boxSize={"10"} />
                                                 </Box>
 
                                                 <Box >
                                                     <VStack width={"100%"} alignItems={"left"} spacing={"0"}>
 
                                                         <Text as={"b"} color={"white"}>{obj.videoDesc}</Text>
-                                                        <Text color={"grey"} fontSize={"sm"}>{"dan brown"} ☑</Text>
+                                                        <Text color={"grey"} fontSize={"sm"}>{obj.author.userName} ☑</Text>
 
                                                     </VStack>
                                                 </Box>

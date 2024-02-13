@@ -1,5 +1,4 @@
 import Test from "./Test";
-import Home from "./Home";
 import Stream from "./Stream";
 import Consume from "./Consume";
 import VideoPage from "./VideoPage";
@@ -9,7 +8,6 @@ import PastStreams from "./PastStreams";
 
 export {
     Test,
-    Home,
     Stream,
     Consume,
     VideoPage,

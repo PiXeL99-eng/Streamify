@@ -4,7 +4,7 @@ export const newVideo = async (videoDetails) => {
 
     try{
 
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}` + "/Streamify/newVideo", videoDetails);
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}` + "/streamify/newVideo", videoDetails);
 
         // console.log(res.data)
 
@@ -19,7 +19,7 @@ export const newVideo = async (videoDetails) => {
 export const getAllVideos = async () => {
 
     try{
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}` + "/Streamify/allVideos");
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}` + "/streamify/allVideos");
 
         // console.log(res.data)
         return res.data
@@ -33,10 +33,10 @@ export const getAllVideos = async () => {
 export const getUserVideos = async (userId) => {
 
     try{
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}` + `/Streamify/userVideos/${userId}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}` + `/streamify/userVideos/${userId}`);
 
         // console.log(res.data)
-        return res.data
+        return res.data.videos
 
     } catch(err){
         console.log(err)
@@ -48,7 +48,7 @@ export const getUserVideos = async (userId) => {
 export const deleteVideo = async (videoID) => {
 
     try{
-        const res = await axios.delete(`${import.meta.env.VITE_API_URL}` + `/Streamify/deleteVideo/${videoID}`);
+        const res = await axios.delete(`${import.meta.env.VITE_API_URL}` + `/streamify/deleteVideo/${videoID}`);
 
         return 1
 
@@ -58,11 +58,11 @@ export const deleteVideo = async (videoID) => {
     }
 }
 
-export const updateVideo = async (videoDetails) => {
+export const updateVideo = async (videoId, videoDetails) => {
 
     try{
 
-        const res = await axios.put(`${import.meta.env.VITE_API_URL}` + "/Streamify/updateVideo", videoDetails);
+        const res = await axios.put(`${import.meta.env.VITE_API_URL}` + "/streamify/updateVideo", {videoId: videoId, updateInfo: videoDetails});
         return true
 
     } catch(err){

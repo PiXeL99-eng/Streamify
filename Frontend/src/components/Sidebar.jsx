@@ -20,11 +20,18 @@ const Sidebar = (props) => {
         navigate("/paststreams", { replace: true })
     }
 
+    // {
+    //     userName: "Sayantan Kundu", (fullName in clerk)
+    //     id: "user_2bgBJk9xMsuP1sMNLMuyoRHu7wd",
+    //     userPreviewUrl: "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ29vZ2xlL2ltZ18yYmdCSmt2a2cxWlVYNk1HSGd5c1F6ZzJQaFkifQ" (imageUrl in clerk)
+    // 
+    // }
+
     return (
         <>
             <Box width={"20%"} background={"#1f2029"} color={"white"} height={"100%"}>
 
-                <StartNewStreamModal isOpen={isOpen} onOpen={onOpen} onClose={onClose} setProfile={props.setProfile} />
+                <StartNewStreamModal isOpen={isOpen} onOpen={onOpen} onClose={onClose} setProfile={props.setProfile} setViewVideoDetails = {props.setViewVideoDetails}/>
 
                 <VStack>
 
@@ -177,28 +184,36 @@ const StartNewStreamModal = (props) => {
     const [imageUrl, setImageUrl] = useState("")
 
     const startStreamingFunction = async () => {
-
-        //API call to create new room
+        
         // delay or loading screen
 
         let roomId = await startStream()
-        roomId = "0c599d99-ec66-432e-b5fa-ebca022d654e"
 
         const videoDetails = {
-            videoDesc: videoDesc,
+            videoDesc: videoDesc.current,
             videoUrl: "",
             previewImageUrl: imageUrl,
-            live: false,
+            live: true,
             roomId: roomId,
-            userId: `${userId}`
+            authorId: `${userId}`
         }
 
         const valid = await newVideo(videoDetails)
 
         if (valid){
-            navigate("/videopage", {replace: true})
             props.onClose()
             props.setProfile("streamer")
+            props.setViewVideoDetails({
+                videoDesc: videoDesc.current,
+                videoUrl: "",
+                previewImageUrl: imageUrl,
+                author: {
+                    userName: user.fullName,
+                    userPreviewUrl: user.imageUrl
+                }
+            })
+            
+            navigate("/videopage", {replace: true})
         }
         else{
             //error handling

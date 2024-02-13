@@ -1,5 +1,5 @@
 import './App.css'
-import { Test, Home} from './pages'
+import { Test} from './pages'
 import Routes from "./routes";
 
 function App() {
@@ -7,7 +7,6 @@ function App() {
   return (
     <>
       {/* <Test/> */}
-      {/* <Home/> */}
       {/* <Signup/> */}
       {/* <Signin/> */}
 

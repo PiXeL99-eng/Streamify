@@ -2,10 +2,24 @@
     position: absolute;
     bottom: 0px;
     height: 10rem;
+    z-index: 21;
+}
+
+#remoteScreenShareVideo{
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
 }
 
 #localVideo{
     position: absolute;
     bottom: 0px;
     height: 10rem;
+    z-index: 21;
+}
+
+#screenShareVideo{
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
 }

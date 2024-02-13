@@ -3,27 +3,25 @@ import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, Input
 import { CloseIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
 import StreamingBox from "./StreamingBox"
+import { stopStream } from '../mediaSoupEndPoints'
+import { useNavigate } from 'react-router-dom'
 
 const Midbox = (props) => {
     return (
         <>
-            <Box width={"60%"} background={"#121212"} color={"white"} height={"100%"}>
+            <Box width={"60%"} background={"#121212"} color={"white"} height={"100%"} overflowY={"auto"}>
 
-                <VStack width={"100%"} height={"100%"} spacing={"0"}>
+                <VStack width={"100%"} minHeight={"100%"} spacing={"0"}>
 
                     {props.profile === "streamer" ?
-                        <StreamControl setProfile = {props.setProfile}/> : <></>
+                        <StreamControl setProfile={props.setProfile} /> : <></>
                     }
 
-                    <Box width={"100%"} background={"#454a4a"} height={"29rem"} position={"relative"}>
-
-                        <VideoBox profile={props.profile}/>
-
-                    </Box>
+                    <VideoBox profile={props.profile} />
 
                     <VStack padding={"4"} width={"100%"}>
 
-                        <VideoDesc profile={props.profile} />
+                        <VideoDesc viewVideoDetails={props.viewVideoDetails} />
 
                         {props.profile === "streamer" ?
                             <EditVideoDesc /> : <></>
@@ -45,10 +43,19 @@ const VideoBox = (props) => {
     return (
         <>
 
-            {props.profile === "streamer" ? 
-                <video id="localVideo" autoPlay = {true} className="video"></video>
+            {props.profile === "streamer" ?
+
+                <Box width={"100%"} background={"#454a4a"} height={"32.4rem"} position={"relative"}>
+                    <video id="localVideo" autoPlay={true} className="video"></video>
+                    <video id="screenShareVideo" autoPlay={true} className="video"></video>
+                </Box>
                 :
-                <video id="remoteVideo" autoPlay={true} className="video"></video>
+                <Box width={"100%"} background={"#454a4a"} height={"32.4rem"} position={"relative"}>
+                    <video id="remoteScreenShareVideo" autoPlay={true} className="video"></video>
+                    <audio id="remoteScreenShareAudio" autoPlay={true}></audio>
+                    <video id="remoteVideo" autoPlay={true} className="video"></video>
+                    <audio id="remoteAudio" autoPlay={true}></audio>
+                </Box>
             }
         </>
     )
@@ -56,10 +63,15 @@ const VideoBox = (props) => {
 
 const StreamControl = (props) => {
 
+    const navigate = useNavigate()
+
     const stopStreaming = () => {
 
+        //API call happens within stopStream()
+        //delay
+        stopStream()
         props.setProfile("viewer")
-        //API call
+        navigate("/allvideos", { replace: true })
 
     }
 
@@ -94,15 +106,15 @@ const VideoDesc = (props) => {
 
         <HStack width={"100%"} spacing={"3"}>
             <Box>
-                <Avatar name='Dan Abrahmov' src='https://bit.ly/dan-abramov' boxSize={"16"} />
+                <Avatar name='Dan Abrahmov' src={props.viewVideoDetails.author.userPreviewUrl} boxSize={"16"} />
             </Box>
 
             <Box >
                 <VStack width={"100%"} alignItems={"left"} spacing={"1"}>
 
-                    <Text as={"b"}>codewithharry ☑</Text>
-                    <Text>42 wins loldfkjbfdkbkskjsbkbks kskbs ks kshks</Text>
-                    <Text color={"red"}>👀 2 viewers</Text>
+                    <Text as={"b"}>{props.viewVideoDetails.author.userName} ☑</Text>
+                    <Text>{props.viewVideoDetails.videoDesc}</Text>
+                    <Text color={"red"} id='viewersCount'>👀 0 viewers</Text>
 
                 </VStack>
             </Box>

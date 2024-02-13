@@ -7,7 +7,7 @@ const PastStreams = (props) => {
 
     const profile = props.profile
     const setProfile = props.setProfile
-    const { userId, isLoaded } = useAuth()
+    const setViewVideoDetails = props.setViewVideoDetails
     
     return (
         <>
@@ -16,7 +16,7 @@ const PastStreams = (props) => {
                 <Box width={"100vw"} background={"#181920"} color={"white"} height={"91%"} >
                     <HStack height={"100%"} spacing={"0"}>
 
-                        <Sidebar profile = {profile} setProfile={setProfile}/>
+                        <Sidebar profile = {profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>
                         <AllPastStreamsGrid profile = {profile}/>
 
                     </HStack>

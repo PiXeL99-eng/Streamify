@@ -6,6 +6,7 @@ const AllVideos = (props) => {
 
     const profile = props.profile
     const setProfile = props.setProfile
+    const setViewVideoDetails = props.setViewVideoDetails
 
     return (
         <>
@@ -14,8 +15,8 @@ const AllVideos = (props) => {
                 <Box width={"100vw"} background={"#181920"} color={"white"} height={"91%"} >
                     <HStack height={"100%"} spacing={"0"}>
 
-                        <Sidebar profile = {profile} setProfile={setProfile}/>
-                        <AllVideosGrid profile = {profile}/>
+                        <Sidebar profile = {profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>
+                        <AllVideosGrid profile = {profile} setViewVideoDetails = {setViewVideoDetails}/>
 
                     </HStack>
                 </Box>

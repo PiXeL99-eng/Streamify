@@ -1,13 +1,14 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react"
 import { ProtectedRoute } from "./ProtectedRoute";
-import { Home, Test, Stream, Consume, VideoPage, AllVideos, Landing, PastStreams} from "../pages"
+import { Test, Stream, Consume, VideoPage, AllVideos, Landing, PastStreams } from "../pages"
 
 const Routes = () => {
 
   const { userId, isLoaded } = useAuth()
   const [profile, setProfile] = useState("viewer") // or streamer
+  const [viewVideoDetails, setViewVideoDetails] = useState({})
 
   // Route configurations go here
 
@@ -15,27 +16,7 @@ const Routes = () => {
     {
       path: "/",
       element: < Landing />,
-    },
-    {
-      path: "/stream",
-      element: < Stream />,
-    },
-    {
-      path: "/consume",
-      element: < Consume />,
-    },
-    {
-      path: "/videopage",
-      element: < VideoPage profile = {profile} setProfile = {setProfile}/>,
-    },
-    {
-      path: "/allvideos",
-      element: < AllVideos profile = {profile} setProfile = {setProfile}/>,
-    },
-    {
-      path: "/paststreams",
-      element: < PastStreams profile = {profile} setProfile = {setProfile}/>,
-    },
+    }
   ];
 
   const routesForAuthenticatedOnly = [
@@ -44,9 +25,17 @@ const Routes = () => {
       element: <ProtectedRoute />,
       children: [
         {
-          path: "/home",
-          element: <Home />,
-        }
+          path: "/videopage",
+          element: < VideoPage profile={profile} setProfile={setProfile} viewVideoDetails = {viewVideoDetails} setViewVideoDetails = {setViewVideoDetails}/>,
+        },
+        {
+          path: "/allvideos",
+          element: < AllVideos profile={profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>,
+        },
+        {
+          path: "/paststreams",
+          element: < PastStreams profile={profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>,
+        },
       ],
     },
   ];

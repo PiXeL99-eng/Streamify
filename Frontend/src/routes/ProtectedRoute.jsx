@@ -6,7 +6,7 @@ export const ProtectedRoute = () => {
 
     const { userId, isLoaded } = useAuth()
 
-    console.log('test', userId)
+    // console.log('test', userId)
 
     if (!isLoaded) return "Loading..."
 

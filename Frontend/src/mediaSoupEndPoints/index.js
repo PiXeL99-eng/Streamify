@@ -1,7 +1,9 @@
 import consumeStream from "./consumer";
-import startStream from "./publisher";
+import {startStream, stopStream} from "./publisher";
+
 
 export {
     consumeStream,
-    startStream
+    startStream,
+    stopStream
 }

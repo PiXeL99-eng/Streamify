@@ -1,14 +1,20 @@
-// const io = require('socket.io-client')
 import { io } from 'socket.io-client'
-// const mediasoupClient = require('mediasoup-client')
 import * as mediasoupClient from "mediasoup-client"
+import { v4 as uuidv4 } from 'uuid'
+import { deleteVideo } from '../api/videoAPICalls'
 
-// const socket = io("/live-video")
 const socket = io("ws://localhost:8900/live-video")
 
+let roomId = null;
 let device
 let rtpCapabilities
 let producerTransport
+let mediaSource
+
+// Function to update the viewer count on the page
+const updateViewerCount = (viewers) => {
+    viewersCount.textContent = `👀 ${viewers} viewers`;
+};
 
 let params = {
     // mediasoup params
@@ -34,35 +40,70 @@ let params = {
     }
 }
 
-const streamSuccess = (stream) => {
+let camAudioParams = { appData: { mediaSource: 'cam-audio' } };
+let screenAudioParams = { appData: { mediaSource: 'screen-audio' } };
+let camVideoParams = { appData: { mediaSource: 'cam-video' }, ...params }
+let screenVideoParams = { appData: { mediaSource: 'screen-video' }, ...params }
+
+let recording = false
+
+const camSuccess = (stream) => {
     localVideo.srcObject = stream
-    const track = stream.getVideoTracks()[0]
-    params = {
-      track,
-      ...params
-    }
+    
+    camAudioParams = { track: stream.getAudioTracks()[0], ...camAudioParams };
+    camVideoParams = { track: stream.getVideoTracks()[0], ...camVideoParams };
   
-    getRtpCapabilities()
-  }
+    sendStream('cam');
+}
+ 
+const screenSuccess = (stream) => {
+    screenShareVideo.srcObject = stream
+
+    screenAudioParams = { track: stream.getAudioTracks()[0], ...screenAudioParams };
+    screenVideoParams = { track: stream.getVideoTracks()[0], ...screenVideoParams };
   
+    sendStream('screen');
+}
+
 const getLocalStream = () => {
     navigator.mediaDevices.getUserMedia({
-        audio: false,
+        audio: true,
         video: {
-        width: {
-            min: 640,
-            max: 1920,
-        },
-        height: {
-            min: 400,
-            max: 1080,
-        }
+            width : {
+                min:100,
+                max:100
+            },
+            height : {
+                min:100,
+                max:100
+            }
         }
     })
-    .then(streamSuccess)
+    .then(camSuccess)
     .catch(error => {
         console.log(error.message)
     })
+}
+
+const getLocalScreen = () => {
+    navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: true
+    })
+    .then(screenSuccess)
+    .catch(error => {
+        console.log(error.message)
+    })
+}
+
+const sendStream = (mediaTag) => {
+    mediaSource = mediaTag
+    if(!producerTransport) { 
+        getRtpCapabilities()
+    }
+    else {
+        connectSendTransport()
+    }
 }
 
 const createDevice = async () => {
@@ -92,7 +133,7 @@ const getRtpCapabilities = () => {
 
 const createSendTransport = () => {
    
-    socket.emit('createWebRtcTransport',({ params }) => {
+    socket.emit('createWebRtcTransport', { consumer: false }, ({ params }) => {
         
         if (params.error) {
             console.log(params.error)
@@ -136,44 +177,130 @@ const createSendTransport = () => {
     })
 }
 
-const connectSendTransport = async () => {
-    const producer = await producerTransport.produce(params)
+const connectSendTransport = () => {
+    if (mediaSource == 'cam'){
+        handleProducer(camAudioParams,camVideoParams);
+    }
+    else {
+        handleProducer(screenAudioParams,screenVideoParams);
+    }
+}
 
-    producer.on('trackended', () => {
-        console.log('track ended')
+const handleProducer = async (audioParams, videoParams) => {
+
+    const audioProducer = await producerTransport.produce(audioParams);
+    const videoProducer = await producerTransport.produce(videoParams);
+
+    audioProducer.on('trackended', () => {
+        console.log('audio track ended')
+        // close audio track
+    })
+  
+    audioProducer.on('transportclose', () => {
+        console.log('audio transport ended')
+        audioProducer.close()
+        // close audio track
+    })
+    
+    videoProducer.on('trackended', () => {
+        console.log('video track ended') 
         // close video track
     })
-
-    producer.on('transportclose', () => {
-        console.log('transport ended')
-        // close transport
+  
+    videoProducer.on('transportclose', () => {
+        console.log('video transport ended')
+        videoProducer.close()
+        // close video track
     })
 }
 
-const generateRoomId = () => {
-    const randomId = Math.random().toString(36).substring(7);
-    return randomId;
-};
+const generateRoomId = (getStream) => {
+    if(roomId != null){
+        getStream()
+        return ;
+    }
 
-const startStream = async () => {
-    const roomId = generateRoomId();
+    roomId = uuidv4()
 
     try {
         // Send the roomId to the server
         socket.emit('startStream', roomId, () => {
            // Get user media (webcam)
-            getLocalStream() 
+            getStream() 
         });
-
         console.log(`Streaming started in room: ${roomId}`);
-        return `${roomId}`
         
+        // fetch("streamify/newVideo",{
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify({
+        //         videoDesc : "new stream",
+        //         previewImageUrl: "/logoMarkv2.png",
+        //         live : true,
+        //         roomId : roomId,
+        //         authorId : 1,
+        //     })
+        // })
+        // .then(res => res.json())
+        // .then(data => {
+        //     streamId = data.videos[0].videoId;
+        // })
+
     } catch (error) {
         console.error('Error accessing webcam:', error);
-        return ""
     }
-};
+}
 
-export default startStream;
+socket.on("viewer-count", (viewers) => {
+    updateViewerCount(viewers)
+})
 
-// document.getElementById('startStreamBtn').addEventListener('click', startStream);
+const startRecording = () => {
+    // todo : send socket event
+    startRecordingBtn.disabled = true;
+}
+
+const stopStream = async (streamId) => {
+    if (recording) {
+        // send stop recording event and make put request
+        // upon receiving video url after upload
+    }
+    else {
+        socket.disconnect();
+        updateViewerCount(0);
+        producerTransport.close();
+        roomId = null;
+        // deleteVideo(streamId)
+
+
+        // await fetch(`streamify/deleteVideo/${streamId}`,{
+        //     method: 'DELETE',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        // })
+    }   
+}
+
+const startCam = () => {
+    generateRoomId(getLocalStream);
+}
+
+const startScreenStream = () => {
+    generateRoomId(getLocalScreen);
+}
+
+const startStream = async () => {
+    startCam()
+    setTimeout(() => {startScreenStream()}, 1000);
+    return roomId;
+}
+
+export {
+    startStream,
+    stopStream,
+    roomId
+}
+
