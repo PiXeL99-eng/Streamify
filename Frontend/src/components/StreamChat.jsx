@@ -1,9 +1,33 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, Icon, InputRightElement } from '@chakra-ui/react'
 import { ArrowDownIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage, Followers } from "../assets"
+import { sendMessagePublisher, socketPublisher } from '../mediaSoupEndPoints'
+import { sendMessageConsumer, socketConsumer } from '../mediaSoupEndPoints'
+import { useUser } from "@clerk/clerk-react"
 
-const StreamChat = () => {
+const StreamChat = (props) => {
+
+  let socket;
+  let sendMessage;
+
+  if (props.profile == "viewer") {
+    socket = socketConsumer
+    sendMessage = sendMessageConsumer
+  }
+  else {
+    socket = socketPublisher
+    sendMessage = sendMessagePublisher
+  }
+
+  const bottom = useRef()
+  const [messages, setMessages] = useState([])
+
+  socket.on("recv-message", (messageDetails) => {
+    setMessages([...messages, [messageDetails[0], messageDetails[1], messageDetails[2]]])   //userName, time, newMessage
+  })
+
+
   return (
     <>
       <Box width={"20%"} background={"#1f2029"} color={"white"} height={"100%"}>
@@ -12,9 +36,9 @@ const StreamChat = () => {
 
           <ChatTop />
 
-          <ChatBox />
+          <ChatBox bottom={bottom} messages={messages} />
 
-          <NewMessage />
+          <NewMessage sendMessage={sendMessage} bottom={bottom} />
 
         </VStack>
 
@@ -43,36 +67,56 @@ const ChatTop = () => {
   )
 }
 
-const ChatBox = () => {
+const ChatBox = (props) => {
+
   return (
     <>
-      <Box height={"100%"} width={"100%"} overflow={"auto"} position={"relative"}>
-        <VStack alignItems={"flex-start"} position={"absolute"} bottom={"0px"}>
-          <Text fontSize={"sm"} paddingX={"5"} wordBreak={"break-word"}>
-            15:12 &nbsp; <span style={{color: "#92fa92"}}><b>antonio:</b></span> &nbsp; Hello brogdzb
-          </Text>
-          <Text fontSize={"sm"} paddingX={"5"} wordBreak={"break-word"}>
-            15:12 &nbsp; <span style={{color: "#92fa92"}}><b>antonio:</b></span> &nbsp; Hello brogdzb
-          </Text>
-          <Text fontSize={"sm"} paddingX={"5"} wordBreak={"break-word"}>
-            15:12 &nbsp; <span style={{color: "#92fa92"}}><b>antonio:</b></span> &nbsp; Hello brogdzb
-          </Text>
+      <Box maxH={"100%"} width={"100%"} overflowY={"auto"} position={"relative"}>
+        <VStack alignItems={"flex-start"} position={"absolute"} bottom={"0px"} left={"0px"}>
+
+          {
+            props.messages.map((message, key) => {
+
+              return (
+                <Text fontSize={"sm"} paddingX={"5"} wordBreak={"break-word"}>
+                  {message[0]} &nbsp; <span style={{ color: "#92fa92" }}><b>{message[1]}:</b></span> &nbsp; {message[2]}
+                </Text>
+              )
+            })
+          }
+
+
+        <div ref={props.bottom}></div>
         </VStack>
       </Box>
     </>
   )
 }
 
-const NewMessage = () => {
+const NewMessage = (props) => {
+
+  const [newMessage, setNewMessage] = useState('')
+  const { user } = useUser()
+  const userName = user.fullName
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    props.sendMessage(userName, new Date().toLocaleTimeString(), newMessage)
+    setNewMessage("")
+    props.bottom.current.scrollIntoView({ behaviour: 'smooth' })
+  }
+
   return (
     <>
       <Box width={"86%"} paddingY={"5"}>
-        <InputGroup border={"#4f4f4f"}>
-          <Input placeholder='Send a message' />
-          <InputRightElement background={"#89898924"} _hover={{cursor: "pointer"}}>
-            <ArrowForwardIcon color='white'/>
-          </InputRightElement>
-        </InputGroup>
+        <form onSubmit={handleSubmit}>
+          <InputGroup border={"#4f4f4f"}>
+            <Input placeholder='Send a message' value={newMessage} onChange={event => setNewMessage(event.currentTarget.value)} />
+            <InputRightElement background={"#89898924"} _hover={{ cursor: "pointer" }} onClick={handleSubmit}>
+              <ArrowForwardIcon color='white' />
+            </InputRightElement>
+          </InputGroup>
+        </form>
       </Box>
     </>
   )

@@ -3,7 +3,7 @@ import * as mediasoupClient from "mediasoup-client"
 
 let device
 let rtpCapabilities
-let socket
+const socket = io("ws://localhost:8900/live-video")
 let consumerTransport
 
 // Function to update the viewer count on the page
@@ -117,7 +117,6 @@ const setMedia = (container, track) => {
 }
 
 const consumeStream = (roomId) => {
-    socket = io("ws://localhost:8900/live-video")
 
     try {
         socket.emit("JoinRoom",roomId, () => {
@@ -146,6 +145,16 @@ const consumeStream = (roomId) => {
     }
 };
 
-export default consumeStream;
+//chat function
+const sendMessage = (userName, time, message) => {
+    let fullMessage = [userName, time, message]
+    socket.emit("send-message", fullMessage)
+}
+
+export {
+    consumeStream,
+    socket,
+    sendMessage
+} 
 // document.getElementById('consumeBtn').addEventListener('click', consumeStream);
 

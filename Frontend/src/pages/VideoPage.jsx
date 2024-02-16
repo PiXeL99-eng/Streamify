@@ -32,7 +32,7 @@ const VideoPage = (props) => {
 
                             <Sidebar profile={profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>
                             <Midbox profile={profile} setProfile={setProfile} viewVideoDetails={viewVideoDetails} />
-                            <StreamChat />
+                            <StreamChat profile={profile}/>
 
                         </HStack>
                     }

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react"
 import { ProtectedRoute } from "./ProtectedRoute";
-import { Test, Stream, Consume, VideoPage, AllVideos, Landing, PastStreams } from "../pages"
+import { Test, VideoPage, AllVideos, Landing, PastStreams } from "../pages"
 
 const Routes = () => {
 

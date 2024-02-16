@@ -298,9 +298,17 @@ const startStream = async () => {
     return roomId;
 }
 
+//chat function
+const sendMessage = (userName, time, message) => {
+    let fullMessage = [userName, time, message]
+    socket.emit("send-message", fullMessage)
+}
+
 export {
     startStream,
     stopStream,
-    roomId
+    roomId,
+    sendMessage,
+    socket
 }
 

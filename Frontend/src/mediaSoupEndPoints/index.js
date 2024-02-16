@@ -1,9 +1,13 @@
-import consumeStream from "./consumer";
-import {startStream, stopStream} from "./publisher";
+import {consumeStream, socket as socketConsumer, sendMessage as sendMessageConsumer} from "./consumer";
+import {startStream, stopStream, socket as socketPublisher, sendMessage as sendMessagePublisher} from "./publisher";
 
 
 export {
     consumeStream,
     startStream,
-    stopStream
+    stopStream,
+    sendMessageConsumer,
+    sendMessagePublisher,
+    socketConsumer,
+    socketPublisher
 }
