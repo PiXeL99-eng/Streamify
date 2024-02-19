@@ -3,14 +3,16 @@ import { Container, Box, Button, HStack, SimpleGrid, Avatar, VStack, Text, Card,
 import { consumeStream } from '../mediaSoupEndPoints'
 import { useNavigate } from "react-router-dom"
 import { getAllVideos } from '../api/videoAPICalls'
+import { useParams } from "react-router-dom"
 
 const AllVideosGrid = (props) => {
 
     const navigate = useNavigate()
     const [videos, setVideos] = useState([])
-
+    const { query } = useParams();
+    
     const playStream = (obj) => {
-
+        
         // if a user is streaming, do not open let them open viewer page
         // else he is viewer by default, so no problem
         props.setViewVideoDetails({
@@ -22,17 +24,17 @@ const AllVideosGrid = (props) => {
         
         consumeStream(obj.roomId)
         navigate("/videopage", { replace: true })
-
+        
     }
 
     useEffect(() => {
 
-        getAllVideos().then((data) => {
+        getAllVideos(query).then((data) => {
             data.reverse()
             setVideos(data)
         })
 
-    }, [])
+    }, [query])
 
     // const videos = [
     //     {

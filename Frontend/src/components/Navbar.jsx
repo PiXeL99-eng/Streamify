@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, { useState, useRef } from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, FormLabel } from '@chakra-ui/react'
 import { SearchIcon, ChatIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
@@ -7,7 +7,9 @@ import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
 import { FaVideo, FaUpload } from "react-icons/fa6"
 import { useNavigate } from "react-router-dom"
 
-const Navbar = (props) => {
+const Navbar = () => {
+    
+    const [query, setQuery] = useState('')
 
     return (
         <>
@@ -17,9 +19,9 @@ const Navbar = (props) => {
 
                     <LeftCornerNavbar />
 
-                    <SearchBox />
+                    <SearchBox setQuery = {setQuery} query = {query}/>
 
-                    <RightCornerNavbar profile={props.profile} setProfile={props.setProfile}/>
+                    <RightCornerNavbar setQuery = {setQuery}/>
 
                 </HStack>
 
@@ -28,21 +30,26 @@ const Navbar = (props) => {
     )
 }
 
-const SearchBox = () => {
+const SearchBox = (props) => {
 
-    const runSearch = () => {
-        console.log("searched")
+    const navigate = useNavigate()
+
+    const runSearch = (event) => {
+        event.preventDefault()
+        navigate(`/allvideos/${props.query}`, { replace: true })
     }
 
     return (
         <>
             <Box width={"24%"}>
-                <InputGroup size='md' border={"transparent"}>
-                    <Input placeholder='Search' background={"#1f2029"} color={"white"} borderRadius={"3px 3px 3px 3px"} />
-                    <InputRightAddon background={"transparent"} onClick={runSearch} _hover={{ cursor: "pointer" }} backgroundColor={"#323232cf"}>
-                        <SearchIcon />
-                    </InputRightAddon>
-                </InputGroup>
+                <form onSubmit={runSearch}>
+                    <InputGroup size='md' border={"transparent"}>
+                        <Input placeholder='Search' background={"#1f2029"} color={"white"} value={props.query} borderRadius={"3px 3px 3px 3px"} onChange={(e) => props.setQuery(e.target.value)} />
+                        <InputRightAddon background={"transparent"} onClick={runSearch} _hover={{ cursor: "pointer" }} backgroundColor={"#323232cf"} typeof='submit'>
+                            <SearchIcon />
+                        </InputRightAddon>
+                    </InputGroup>
+                </form>
             </Box>
         </>
     )
@@ -76,6 +83,7 @@ const RightCornerNavbar = (props) => {
     const navigate = useNavigate()
 
     const showAllVideos = () => {
+        props.setQuery('')
         navigate("/allvideos", { replace: true })
     }
 

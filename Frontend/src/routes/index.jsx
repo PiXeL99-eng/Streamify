@@ -29,6 +29,10 @@ const Routes = () => {
           element: < VideoPage profile={profile} setProfile={setProfile} viewVideoDetails = {viewVideoDetails} setViewVideoDetails = {setViewVideoDetails}/>,
         },
         {
+          path: "/allvideos/:query",
+          element: < AllVideos profile={profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>,
+        },
+        {
           path: "/allvideos",
           element: < AllVideos profile={profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>,
         },
