@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, Icon, InputRightElement } from '@chakra-ui/react'
 import { ArrowDownIcon, ArrowForwardIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage, Followers } from "../assets"
@@ -27,6 +27,14 @@ const StreamChat = (props) => {
     setMessages([...messages, [messageDetails[0], messageDetails[1], messageDetails[2]]])   //userName, time, newMessage
   })
 
+  useEffect(() => {
+
+    const scrollToBottom = () => {
+      bottom.current?.scrollIntoView({ behaviour: 'smooth' })
+    }
+
+    scrollToBottom()
+  }, [messages]);
 
   return (
     <>
@@ -36,9 +44,9 @@ const StreamChat = (props) => {
 
           <ChatTop />
 
-          <ChatBox bottom={bottom} messages={messages} />
+          <ChatBox bottom={bottom} messages={messages}/>
 
-          <NewMessage sendMessage={sendMessage} bottom={bottom} />
+          <NewMessage sendMessage={sendMessage} bottom={bottom}/>
 
         </VStack>
 
@@ -71,8 +79,8 @@ const ChatBox = (props) => {
 
   return (
     <>
-      <Box maxH={"100%"} width={"100%"} overflowY={"auto"} position={"relative"}>
-        <VStack alignItems={"flex-start"} position={"absolute"} bottom={"0px"} left={"0px"}>
+      <Box height={"100%"} width={"100%"} overflowY={"auto"}>
+        <VStack alignItems={"flex-start"} minH={"100%"} justifyContent={"flex-end"}>
 
           {
             props.messages.map((message, key) => {
@@ -85,8 +93,7 @@ const ChatBox = (props) => {
             })
           }
 
-
-        <div ref={props.bottom}></div>
+          <div ref={props.bottom}></div>
         </VStack>
       </Box>
     </>
@@ -103,7 +110,6 @@ const NewMessage = (props) => {
     event.preventDefault()
     props.sendMessage(userName, new Date().toLocaleTimeString(), newMessage)
     setNewMessage("")
-    props.bottom.current.scrollIntoView({ behaviour: 'smooth' })
   }
 
   return (

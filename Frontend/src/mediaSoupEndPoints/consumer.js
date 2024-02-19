@@ -62,6 +62,7 @@ const createRecvTransport = async () => {
                 errback(error)
             }
         })
+
         subscribeToMedia(mediaSources)
     })
 }

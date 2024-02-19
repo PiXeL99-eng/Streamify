@@ -27,7 +27,10 @@ const AllVideosGrid = (props) => {
 
     useEffect(() => {
 
-        getAllVideos().then((data) => {setVideos(data)})
+        getAllVideos().then((data) => {
+            data.reverse()
+            setVideos(data)
+        })
 
     }, [])
 

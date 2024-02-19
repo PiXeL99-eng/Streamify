@@ -31,7 +31,10 @@ const AllPastStreamsGrid = (props) => {
 
     useEffect(() => {
 
-        getUserVideos(userId).then((data) => { setVideos(data) })
+        getUserVideos(userId).then((data) => {
+            data.reverse() 
+            setVideos(data) 
+        })
 
     }, [userId])
 

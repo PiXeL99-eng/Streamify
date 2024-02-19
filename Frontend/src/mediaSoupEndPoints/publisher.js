@@ -294,7 +294,7 @@ const startScreenStream = () => {
 
 const startStream = async () => {
     startCam()
-    setTimeout(() => {startScreenStream()}, 1000);
+    setTimeout(() => {startScreenStream()}, 3000);
     return roomId;
 }
 
