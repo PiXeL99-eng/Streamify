@@ -16,13 +16,21 @@ export const newVideo = async (videoDetails) => {
     }
 }
 
-export const getAllVideos = async () => {
+export const getAllVideos = async (query) => {
 
     try{
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}` + "/streamify/allVideos");
+
+        console.log(axios.defaults.headers.common)
+        if(query){
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}` + `/streamify/allVideos?search=${query}`);
+            return res.data
+        }
+        else{
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}` + `/streamify/allVideos`);
+            return res.data
+        }
 
         // console.log(res.data)
-        return res.data
 
     } catch(err){
         console.log(err)

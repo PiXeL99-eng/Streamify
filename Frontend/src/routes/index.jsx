@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { useAuth } from "@clerk/clerk-react"
+// import { useAuth } from "@clerk/clerk-react"
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Test, VideoPage, AllVideos, Landing, PastStreams } from "../pages"
 
+
 const Routes = () => {
 
-  const { userId, isLoaded } = useAuth()
   const [profile, setProfile] = useState("viewer") // or streamer
   const [viewVideoDetails, setViewVideoDetails] = useState({})
 
@@ -26,15 +26,19 @@ const Routes = () => {
       children: [
         {
           path: "/videopage",
-          element: < VideoPage profile={profile} setProfile={setProfile} viewVideoDetails = {viewVideoDetails} setViewVideoDetails = {setViewVideoDetails}/>,
+          element: < VideoPage profile={profile} setProfile={setProfile} viewVideoDetails={viewVideoDetails} setViewVideoDetails={setViewVideoDetails} />,
+        },
+        {
+          path: "/allvideos/:query",
+          element: < AllVideos profile={profile} setProfile={setProfile} setViewVideoDetails={setViewVideoDetails} />,
         },
         {
           path: "/allvideos",
-          element: < AllVideos profile={profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>,
+          element: < AllVideos profile={profile} setProfile={setProfile} setViewVideoDetails={setViewVideoDetails} />,
         },
         {
           path: "/paststreams",
-          element: < PastStreams profile={profile} setProfile={setProfile} setViewVideoDetails = {setViewVideoDetails}/>,
+          element: < PastStreams profile={profile} setProfile={setProfile} setViewVideoDetails={setViewVideoDetails} />,
         },
       ],
     },

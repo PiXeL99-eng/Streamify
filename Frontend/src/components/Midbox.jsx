@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, Icon } from '@chakra-ui/react'
 import { CloseIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
@@ -7,6 +7,7 @@ import { stopStream } from '../mediaSoupEndPoints'
 import { useNavigate } from 'react-router-dom'
 
 const Midbox = (props) => {
+
     return (
         <>
             <Box width={"60%"} background={"#121212"} color={"white"} height={"100%"} overflowY={"auto"}>
@@ -63,17 +64,52 @@ const VideoBox = (props) => {
 
 const StreamControl = (props) => {
 
-    const navigate = useNavigate()
+    const [timer, setTimer] = useState(0);
+    const [isRunning, setIsRunning] = useState(true);
+    console.log("hi")
 
+    const formatTime = (timer) => {
+        const hours = Math.floor(timer / 360000).toString().padStart(2, "0");
+        const minutes = Math.floor((timer % 360000) / 6000).toString().padStart(2, "0");
+        const seconds = Math.floor((timer % 6000) / 100).toString().padStart(2, "0");
+        const milliseconds = (timer % 100).toString().padStart(2, "0");
+
+        return { hours, minutes, seconds, milliseconds };
+    };
+
+    const { hours, minutes, seconds, milliseconds } = formatTime(timer);
+
+    // const handleStart = () => {
+    //     timeInterval.current = setInterval(() => {
+    //         setTimer((prev) => prev + 1);
+    //     }, 10);
+    // };
+
+    useEffect(() => {
+        let intervalId;
+        if (isRunning) {
+          // setting time from 0 to 1 every 10 milisecond using javascript setInterval method
+        intervalId = setInterval(() => setTimer(timer + 1), 7);
+        }
+        return () => clearInterval(intervalId);
+      }, [isRunning, timer]);
+      
+    const handleStop = () => {
+        setIsRunning(false)
+    };
+
+    const navigate = useNavigate()
     const stopStreaming = () => {
 
         //API call happens within stopStream()
         //delay
+        handleStop()
         stopStream()
         props.setProfile("viewer")
         navigate("/allvideos", { replace: true })
 
     }
+
 
     return (
         <>
@@ -83,7 +119,10 @@ const StreamControl = (props) => {
                     <HStack width={"100%"}>
                         <Box width={"75%"}>
 
-                            Streaming Since: <span>00:00:05</span>
+                            Streaming Since: &nbsp;
+                            {hours}:
+                            {minutes}:
+                            {seconds}
                         </Box>
 
                         <Box width={"25%"} alignContent={"center"}>
