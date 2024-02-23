@@ -20,6 +20,7 @@ export const getAllVideos = async (query) => {
 
     try{
 
+        console.log(axios.defaults.headers.common)
         if(query){
             const res = await axios.get(`${import.meta.env.VITE_API_URL}` + `/streamify/allVideos?search=${query}`);
             return res.data
