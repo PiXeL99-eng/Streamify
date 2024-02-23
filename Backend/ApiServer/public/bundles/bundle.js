@@ -8,12 +8,10 @@ const fetchVideos = async () => {
         const userVideos = await response.json();
         console.log(userVideos)
         // Display video boxes in the gallery
-        userVideos.forEach(videoInfo => {
-            videoInfo.videos.forEach(video => {
+            userVideos.forEach(video => {
                 const videoBox = createVideoBox(video);
                 videoGallery.appendChild(videoBox);
             });
-        });
     } catch (error) {
         console.error('Error fetching videos:', error);
     }

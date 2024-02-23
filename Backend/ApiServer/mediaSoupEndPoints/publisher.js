@@ -1,6 +1,7 @@
 const io = require('socket.io-client')
 const mediasoupClient = require('mediasoup-client')
 const { v4: uuidv4 } = require('uuid');
+const { Transport } = require('mediasoup-client/lib/types');
 
 const socket = io("ws://localhost:8900/live-video")
 
@@ -48,20 +49,25 @@ let screenVideoParams = { appData: { mediaSource: 'screen-video' }, ...params }
 let recording = false
 
 const camSuccess = (stream) => {
-    localVideo.srcObject = stream
+    const [audioTrack, videoTrack] = stream.getTracks()
+
+    localVideo.srcObject = new MediaStream([videoTrack])
     
-    camAudioParams = { track: stream.getAudioTracks()[0], ...camAudioParams };
-    camVideoParams = { track: stream.getVideoTracks()[0], ...camVideoParams };
+    camAudioParams = { track: audioTrack, ...camAudioParams };
+    camVideoParams = { track: videoTrack, ...camVideoParams };
   
     sendStream('cam');
 }
  
 const screenSuccess = (stream) => {
-    screenShareVideo.srcObject = stream
+    const videoTrack = stream.getVideoTracks()[0]
+    const audioTrack = stream.getAudioTracks()[0] || []
+    
+    screenShareVideo.srcObject = new MediaStream([videoTrack])
 
-    screenAudioParams = { track: stream.getAudioTracks()[0], ...screenAudioParams };
-    screenVideoParams = { track: stream.getVideoTracks()[0], ...screenVideoParams };
-  
+    screenAudioParams = { track: audioTrack, ...screenAudioParams };
+    screenVideoParams = { track: videoTrack, ...screenVideoParams };
+    
     sendStream('screen');
 }
 
@@ -87,8 +93,8 @@ const getLocalStream = () => {
 
 const getLocalScreen = () => {
     navigator.mediaDevices.getDisplayMedia({
-        audio: true,
-        video: true
+        audio : true,
+        video : true,
     })
     .then(screenSuccess)
     .catch(error => {
@@ -182,25 +188,12 @@ const connectSendTransport = () => {
         handleProducer(camAudioParams,camVideoParams);
     }
     else {
-        handleProducer(screenAudioParams,screenVideoParams);
+        handleProducer(screenAudioParams, screenVideoParams);
     }
 }
 
 const handleProducer = async (audioParams, videoParams) => {
-
-    const audioProducer = await producerTransport.produce(audioParams);
     const videoProducer = await producerTransport.produce(videoParams);
-
-    audioProducer.on('trackended', () => {
-        console.log('audio track ended')
-        // close audio track
-    })
-  
-    audioProducer.on('transportclose', () => {
-        console.log('audio transport ended')
-        audioProducer.close()
-        // close audio track
-    })
     
     videoProducer.on('trackended', () => {
         console.log('video track ended') 
@@ -212,6 +205,21 @@ const handleProducer = async (audioParams, videoParams) => {
         videoProducer.close()
         // close video track
     })
+
+    if (audioParams.track.length){
+        const audioProducer = await producerTransport.produce(audioParams);
+
+        audioProducer.on('trackended', () => {
+            console.log('audio track ended')
+            // close audio track
+        })
+    
+        audioProducer.on('transportclose', () => {
+            console.log('audio transport ended')
+            audioProducer.close()
+            // close audio track
+        })
+    }
 }
 
 const generateRoomId = (getStream) => {
@@ -239,7 +247,7 @@ const generateRoomId = (getStream) => {
                 previewImageUrl: "/logoMarkv2.png",
                 live : true,
                 roomId : roomId,
-                authorId : "1",
+                authorId : "user_2cSJ7CwiOE9uPutXj6ChFkUJAZh",
             })
         })
         .then(res => res.json())

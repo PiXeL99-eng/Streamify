@@ -3,7 +3,8 @@ import * as mediasoupClient from "mediasoup-client"
 import { v4 as uuidv4 } from 'uuid'
 import { deleteVideo } from '../api/videoAPICalls'
 
-const socket = io("ws://localhost:8900/live-video")
+let socket = io("ws://localhost:8900/live-video");
+let first = false
 
 let roomId = null;
 let device
@@ -49,7 +50,7 @@ let recording = false
 
 const camSuccess = (stream) => {
     localVideo.srcObject = stream
-    
+    console.log("check - ",stream)
     camAudioParams = { track: stream.getAudioTracks()[0], ...camAudioParams };
     camVideoParams = { track: stream.getVideoTracks()[0], ...camVideoParams };
   
@@ -219,7 +220,7 @@ const generateRoomId = (getStream) => {
         getStream()
         return ;
     }
-
+    console.log("yo")
     roomId = uuidv4()
 
     try {
@@ -293,6 +294,10 @@ const startScreenStream = () => {
 }
 
 const startStream = async () => {
+    if(first){
+        socket = io("ws://localhost:8900/live-video")
+        first = true
+    }
     startCam()
     setTimeout(() => {startScreenStream()}, 1000);
     return roomId;

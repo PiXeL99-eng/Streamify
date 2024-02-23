@@ -36,7 +36,7 @@ const pastStreams = async (req, res) => {
             },
             include : {
                 videos : {
-                    // Filter for non-live posts
+                    // Filter for non-live videos
                     where : { 
                         live : false 
                     }, 
