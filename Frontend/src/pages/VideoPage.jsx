@@ -15,7 +15,7 @@ const VideoPage = (props) => {
     return (
         <>
             <Box height={"100vh"} w={"100vw"} background={"#181920"} margin={"0"} padding={"0"}>
-                <Navbar/>
+                <Navbar profile = {profile}/>
                 < Box width={"100vw"} background={"#181920"} color={"white"} height={"91%"} >
 
                     {viewVideoDetails.videoDesc === undefined ?

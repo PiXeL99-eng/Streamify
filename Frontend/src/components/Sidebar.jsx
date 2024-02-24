@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { Container, Box, Button, Stack, HStack, VStack, Input, InputGroup, InputRightAddon, Image, Text, Avatar, Icon, FormLabel, Divider } from '@chakra-ui/react'
 import { ArrowDownIcon } from '@chakra-ui/icons'
-import { SearchIcon, ChatIcon } from '@chakra-ui/icons'
+import { SearchIcon, ChatIcon, RepeatClockIcon } from '@chakra-ui/icons'
 import { DashboardImage, Exitmage } from "../assets"
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure } from '@chakra-ui/react'
 import { FaVideo, FaUpload } from "react-icons/fa6"
@@ -31,7 +31,7 @@ const Sidebar = (props) => {
         <>
             <Box width={"20%"} background={"#1f2029"} color={"white"} height={"100%"}>
 
-                <StartNewStreamModal isOpen={isOpen} onOpen={onOpen} onClose={onClose} setProfile={props.setProfile} setViewVideoDetails = {props.setViewVideoDetails}/>
+                <StartNewStreamModal isOpen={isOpen} onOpen={onOpen} onClose={onClose} setProfile={props.setProfile} setViewVideoDetails={props.setViewVideoDetails} />
 
                 <VStack>
 
@@ -48,10 +48,18 @@ const Sidebar = (props) => {
                             Start New Stream 📽
                         </Button>
 
-                        <Divider marginY={"2"}/>
-
-                        <Box width={"100%"} borderRadius={"7px"} background={"#272831"} padding={"14px"} onClick={openPastStreams} _hover={{cursor: "pointer"}}>
-                            View Past Streams
+                        <Divider marginY={"2"} />
+                            
+                        <Box
+                            width={"100%"}
+                            borderRadius={"7px"}
+                            background={"#272831"}
+                            padding={"14px"}
+                            onClick={() => props.profile === "viewer" ? openPastStreams() : null}
+                            _hover={props.profile === "viewer" ? { cursor: "pointer", background: "#303139", color: "#e8e8e8"}: {cursor: "not-allowed"}}
+                            border={"1px dashed #b7b7b7"}
+                        >
+                            View Past Streams &nbsp; <RepeatClockIcon boxSize={"4"} marginBottom={"1"}/>
                         </Box>
 
                     </VStack>
@@ -184,7 +192,7 @@ const StartNewStreamModal = (props) => {
     const [imageUrl, setImageUrl] = useState("")
 
     const startStreamingFunction = async () => {
-        
+
         // delay or loading screen
 
         let roomId = await startStream()
@@ -200,7 +208,7 @@ const StartNewStreamModal = (props) => {
 
         const valid = await newVideo(videoDetails)
 
-        if (valid){
+        if (valid) {
             props.onClose()
             props.setProfile("streamer")
             props.setViewVideoDetails({
@@ -212,10 +220,10 @@ const StartNewStreamModal = (props) => {
                     userPreviewUrl: user.imageUrl
                 }
             })
-            
-            navigate("/videopage", {replace: true})
+
+            navigate("/videopage", { replace: true })
         }
-        else{
+        else {
             //error handling
         }
     }
@@ -230,7 +238,7 @@ const StartNewStreamModal = (props) => {
 
                     <HStack spacing={"5"}>
 
-                        <UploadWidget setImageUrl={setImageUrl}/>
+                        <UploadWidget setImageUrl={setImageUrl} />
 
                         <Box>
                             <FormLabel marginTop={"2"} opacity={"0.7"}>Video Description</FormLabel>
@@ -247,7 +255,7 @@ const StartNewStreamModal = (props) => {
                                 border="1px solid #4c4c4c"
                                 // variant='filled'
                                 disabled={true}
-                                value={user ? user.fullName: ""}
+                                value={user ? user.fullName : ""}
                             />
 
                             <HStack spacing={"4"} marginTop={"4"}>

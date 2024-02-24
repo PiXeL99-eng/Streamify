@@ -7,8 +7,8 @@ import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
 import { FaVideo, FaUpload } from "react-icons/fa6"
 import { useNavigate } from "react-router-dom"
 
-const Navbar = () => {
-    
+const Navbar = (props) => {
+
     const [query, setQuery] = useState('')
 
     return (
@@ -19,9 +19,9 @@ const Navbar = () => {
 
                     <LeftCornerNavbar />
 
-                    <SearchBox setQuery = {setQuery} query = {query}/>
+                    <SearchBox setQuery={setQuery} query={query} profile={props.profile} />
 
-                    <RightCornerNavbar setQuery = {setQuery}/>
+                    <RightCornerNavbar setQuery={setQuery} profile={props.profile} />
 
                 </HStack>
 
@@ -38,14 +38,31 @@ const SearchBox = (props) => {
         event.preventDefault()
         navigate(`/allvideos/${props.query}`, { replace: true })
     }
+    const runSearchFromButton = () => {
+        navigate(`/allvideos/${props.query}`, { replace: true })
+    }
 
     return (
         <>
             <Box width={"24%"}>
                 <form onSubmit={runSearch}>
                     <InputGroup size='md' border={"transparent"}>
-                        <Input placeholder='Search' background={"#1f2029"} color={"white"} value={props.query} borderRadius={"3px 3px 3px 3px"} onChange={(e) => props.setQuery(e.target.value)} />
-                        <InputRightAddon background={"transparent"} onClick={runSearch} _hover={{ cursor: "pointer" }} backgroundColor={"#323232cf"} typeof='submit'>
+                        <Input
+                            placeholder='Search'
+                            background={"#1f2029"}
+                            color={"white"}
+                            value={props.query}
+                            borderRadius={"3px 3px 3px 3px"}
+                            onChange={(e) => props.setQuery(e.target.value)}
+                            isDisabled={props.profile === "streamer" ? true : false}
+                        />
+                        <InputRightAddon
+                            background={"transparent"}
+                            onClick={() => props.profile === "viewer" ? runSearchFromButton() : null}
+                            _hover={props.profile === "viewer" ? { cursor: "pointer" }: {cursor: "not-allowed"}}
+                            backgroundColor={"#323232cf"}
+                            typeof='submit'
+                        >
                             <SearchIcon />
                         </InputRightAddon>
                     </InputGroup>
@@ -91,7 +108,11 @@ const RightCornerNavbar = (props) => {
         <>
             <Box width={"12%"} marginRight={"2"}>
                 <HStack spacing={"0"} justifyContent={"space-around"}>
-                    <HStack spacing={"2"} _hover={{ cursor: "pointer" }} onClick={showAllVideos}>
+                    <HStack
+                        spacing={"2"}
+                        _hover={props.profile === "viewer" ? { cursor: "pointer" }: {cursor: "not-allowed"}}
+                        onClick={() => props.profile === "viewer" ? showAllVideos() : null}
+                    >
                         <Image
                             boxSize='22px'
                             src={DashboardImage}
