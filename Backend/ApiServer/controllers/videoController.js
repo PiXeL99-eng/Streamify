@@ -104,7 +104,6 @@ const updateStream = async (req, res) => {
         //     }
         // }
         const { videoID, updateInfo } = req.body;
-
         const decryptedVideoID = decrypt(videoID);
         await prisma.video.update({
             where : {

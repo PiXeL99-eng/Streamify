@@ -32,7 +32,6 @@ const AllPastStreamsGrid = (props) => {
     useEffect(() => {
 
         getUserVideos(userId).then((data) => {
-            data.reverse() 
             setVideos(data) 
         })
 
@@ -54,7 +53,7 @@ const AllPastStreamsGrid = (props) => {
     const deleteClickedVideo = (videoId) => {
 
         deleteVideo(videoId)
-        navigate("/paststreams", { replace: true })
+        navigate(0)
 
     }
 
@@ -134,8 +133,8 @@ const AllPastStreamsGrid = (props) => {
                                                     src={obj.previewImageUrl}
                                                     alt='streamed or streaming video'
                                                     borderRadius='lg'
-                                                    // height={"11rem"}
-                                                    // width={"17rem"}
+                                                    height={"11rem"}
+                                                    width={"17rem"}
                                                 />
                                             </Box>
 
@@ -185,7 +184,7 @@ const EditStreamModal = (props) => {
 
         if (valid) {
             props.onClose()
-            navigate("/paststreams", { replace: true })
+            navigate(0)
         }
         else {
             //error handling
