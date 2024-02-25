@@ -70,7 +70,7 @@ export const updateVideo = async (videoId, videoDetails) => {
 
     try{
 
-        const res = await axios.put(`${import.meta.env.VITE_API_URL}` + "/streamify/updateVideo", {videoId: videoId, updateInfo: videoDetails});
+        const res = await axios.put(`${import.meta.env.VITE_API_URL}` + "/streamify/updateVideo", {videoID: videoId, updateInfo: videoDetails});
         return true
 
     } catch(err){
