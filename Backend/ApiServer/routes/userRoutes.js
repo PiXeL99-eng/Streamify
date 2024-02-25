@@ -19,6 +19,7 @@ router.post("/newUser", authenticateRequest, async (req, res) => {
                 userPreviewUrl : imageUrl,
             },
         });
+        res.status(201).json("user created")
         
     } catch (error) {
         console.error(error);
