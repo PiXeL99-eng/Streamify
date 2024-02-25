@@ -3,13 +3,7 @@ const prisma = require("../data/db")
 
 const getAllVideos = async (req, res) => {
 
-    // console.log(req.auth)
-
-    // if (Object.keys(req.auth).length === 0){
-    //     return res.status(400).json({error: 'Not authenticated'});
-    // }
-
-    const query = req.query.search ? req.query.search : "";
+    const query = req.query.search || "";
 
     const videos = await prisma.video.findMany({
         where : {
@@ -36,7 +30,7 @@ const getAllVideos = async (req, res) => {
 
 const pastStreams = async (req, res) => {
     try {
-        const userID = req.params.userId;
+        const userID = req.auth.userId;
         const userVideos = await prisma.user.findUnique({
             where : { 
                 id : userID,

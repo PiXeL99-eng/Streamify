@@ -49,20 +49,25 @@ let screenVideoParams = { appData: { mediaSource: 'screen-video' }, ...params }
 let recording = false
 
 const camSuccess = (stream) => {
-    localVideo.srcObject = stream
-    console.log("check - ",stream)
-    camAudioParams = { track: stream.getAudioTracks()[0], ...camAudioParams };
-    camVideoParams = { track: stream.getVideoTracks()[0], ...camVideoParams };
+    const [audioTrack, videoTrack] = stream.getTracks()
+
+    localVideo.srcObject = new MediaStream([videoTrack])
+    
+    camAudioParams = { track: audioTrack, ...camAudioParams };
+    camVideoParams = { track: videoTrack, ...camVideoParams };
   
     sendStream('cam');
 }
  
 const screenSuccess = (stream) => {
-    screenShareVideo.srcObject = stream
+    const videoTrack = stream.getVideoTracks()[0]
+    const audioTrack = stream.getAudioTracks()[0] || []
+    
+    screenShareVideo.srcObject = new MediaStream([videoTrack])
 
-    screenAudioParams = { track: stream.getAudioTracks()[0], ...screenAudioParams };
-    screenVideoParams = { track: stream.getVideoTracks()[0], ...screenVideoParams };
-  
+    screenAudioParams = { track: audioTrack, ...screenAudioParams };
+    screenVideoParams = { track: videoTrack, ...screenVideoParams };
+    
     sendStream('screen');
 }
 
@@ -189,19 +194,7 @@ const connectSendTransport = () => {
 
 const handleProducer = async (audioParams, videoParams) => {
 
-    const audioProducer = await producerTransport.produce(audioParams);
     const videoProducer = await producerTransport.produce(videoParams);
-
-    audioProducer.on('trackended', () => {
-        console.log('audio track ended')
-        // close audio track
-    })
-  
-    audioProducer.on('transportclose', () => {
-        console.log('audio transport ended')
-        audioProducer.close()
-        // close audio track
-    })
     
     videoProducer.on('trackended', () => {
         console.log('video track ended') 
@@ -213,6 +206,21 @@ const handleProducer = async (audioParams, videoParams) => {
         videoProducer.close()
         // close video track
     })
+
+    if (audioParams.track.length){
+        const audioProducer = await producerTransport.produce(audioParams);
+
+        audioProducer.on('trackended', () => {
+            console.log('audio track ended')
+            // close audio track
+        })
+    
+        audioProducer.on('transportclose', () => {
+            console.log('audio transport ended')
+            audioProducer.close()
+            // close audio track
+        })
+    }
 }
 
 const generateRoomId = (getStream) => {
@@ -220,7 +228,6 @@ const generateRoomId = (getStream) => {
         getStream()
         return ;
     }
-    console.log("yo")
     roomId = uuidv4()
 
     try {

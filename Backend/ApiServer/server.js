@@ -3,7 +3,8 @@ require("dotenv").config();
 const express = require('express')
 const path = require('path');
 const cors = require('cors');
-const videoRouter = require("./routes/videoRoutes")
+const videoRouter = require('./routes/videoRoutes')
+const userRouter = require('./routes/userRoutes')
 
 const app = express()
 
@@ -18,16 +19,15 @@ app.use(
   })
 )
 
-//check
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", 
       "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
-//check
 
-app.use("/streamify",videoRouter);
+app.use("/streamify/videos", videoRouter);
+app.use("/streamify/users", userRouter);
 
 
 app.get('/stream', (req, res) => {
