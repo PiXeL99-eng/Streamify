@@ -14,7 +14,7 @@ const AllVideos = (props) => {
     const [token, setToken] = useState(localStorage.getItem("clerk_streamify_token"))
   
     getToken({ template: 'streamify_user' }).then((temp) => {
-  
+      console.log(temp)
       if (!token){
         localStorage.setItem('clerk_streamify_token', temp)
         setToken(temp)
