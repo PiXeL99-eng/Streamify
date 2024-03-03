@@ -9,26 +9,6 @@ const AllVideos = (props) => {
     const setProfile = props.setProfile
     const setViewVideoDetails = props.setViewVideoDetails
 
-    const { getToken } = useAuth()
-    const [token, setToken] = useState(localStorage.getItem("clerk_streamify_token"))
-  
-    getToken({ template: 'streamify_user' }).then((temp) => {
-  
-      if (!token){
-        localStorage.setItem('clerk_streamify_token', temp)
-        setToken(temp)
-      }
-    })
-
-    useEffect(() => {
-        if (token) {
-          axios.defaults.headers.common["Authorization"] = "Bearer " + `${token}`;
-        } else {
-          delete axios.defaults.headers.common["Authorization"];
-          localStorage.removeItem('clerk_streamify_token')
-        }
-    }, [token]);
-
     return (
         <>
             <Box height={"100vh"} w={"100vw"} background={"#181920"} margin={"0"} padding={"0"}>
