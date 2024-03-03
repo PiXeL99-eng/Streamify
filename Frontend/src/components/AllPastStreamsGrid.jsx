@@ -23,15 +23,14 @@ const AllPastStreamsGrid = (props) => {
     const navigate = useNavigate()
     const [videos, setVideos] = useState([])
     const [modalId, setModalId] = useState("")
-    const { userId, isLoaded } = useAuth()
+    const { userId, isLoaded, getToken } = useAuth()
     const { user } = useUser();
-
 
     const { isOpen, onOpen, onClose } = useDisclosure()
 
     useEffect(() => {
 
-        getUserVideos(userId).then((data) => {
+        getUserVideos(getToken).then((data) => {
             setVideos(data) 
         })
 
@@ -52,7 +51,7 @@ const AllPastStreamsGrid = (props) => {
 
     const deleteClickedVideo = (videoId) => {
 
-        deleteVideo(videoId)
+        deleteVideo(getToken, videoId)
         navigate(0)
 
     }
@@ -169,7 +168,7 @@ const EditStreamModal = (props) => {
 
     const videoDesc = useRef()
     const navigate = useNavigate()
-    const { userId } = useAuth()
+    const { userId, getToken } = useAuth()
     const { user } = useUser()
     const [imageUrl, setImageUrl] = useState("")
 
@@ -180,7 +179,7 @@ const EditStreamModal = (props) => {
             previewImageUrl: imageUrl
         }
 
-        const valid = await updateVideo(props.videoId, videoDetails)
+        const valid = await updateVideo(getToken, props.videoId, videoDetails)
 
         if (valid) {
             props.onClose()

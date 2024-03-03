@@ -31,11 +31,9 @@ const Midbox = (props) => {
     const navigate = useNavigate()
     const stopStreaming = () => {
 
-        //API call happens within stopStream()
-        //delay
         stopStream()
         onClose()
-        setIsRunning(false)        //check
+        setIsRunning(false)        
         props.setProfile("viewer")
         navigate("/allvideos", { replace: true })
 
@@ -51,33 +49,6 @@ const Midbox = (props) => {
                         <ModalContent background={"#2d2d2d"} color={"white"} marginTop={"20"} border={"2px solid #ffffff24"}>
                             <ModalHeader>Do you want to stop streaming?</ModalHeader>
                             <ModalCloseButton />
-                            {/* <ModalBody>
-
-                            <HStack spacing={"5"}>
-
-                                <UploadWidget setImageUrl={setImageUrl} />
-
-                                <Box>
-                                    <FormLabel marginTop={"2"} opacity={"0.7"}>Video Description</FormLabel>
-                                    <Input
-                                        size="lg"
-                                        border="1px solid #4c4c4c"
-                                        // variant='filled'
-                                        onChange={event => videoDesc.current = event.currentTarget.value}
-                                    />
-
-                                    <FormLabel marginTop={"2"} opacity={"0.7"}>Uploader Name</FormLabel>
-                                    <Input
-                                        size="lg"
-                                        border="1px solid #4c4c4c"
-                                        // variant='filled'
-                                        disabled={true}
-                                        value={user ? user.fullName : ""}
-                                    />
-                                </Box>
-                            </HStack>
-                        </ModalBody> */}
-
                             <ModalFooter justifyContent={"center"}>
                                 <HStack>
                                     <Button colorScheme='red' mr={3} onClick={stopStreaming}>
@@ -111,12 +82,7 @@ const Midbox = (props) => {
                         }
 
                     </VStack>
-
-
-
                 </VStack>
-
-
             </Box>
         </>
     )

@@ -1,9 +1,21 @@
 import axios from "axios";
 
-export const newVideo = async (videoDetails) => {
+async function setAxiosToken(getToken) {
+
+    try {
+        const token = await getToken({ template: 'streamify_user' });
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        // console.log('Token set successfully');
+    } catch (error) {
+        console.error('Error setting token:', error);
+    }
+}
+
+export const newVideo = async (getToken, videoDetails) => {
 
     try{
 
+        await setAxiosToken(getToken);
         const res = await axios.post(`${import.meta.env.VITE_API_URL}` + "/streamify/videos/newVideo", videoDetails);
 
         // console.log(res.data)
@@ -16,11 +28,12 @@ export const newVideo = async (videoDetails) => {
     }
 }
 
-export const getAllVideos = async (query) => {
+export const getAllVideos = async (getToken, query) => {
 
     try{
 
-        console.log(axios.defaults.headers.common)
+        await setAxiosToken(getToken);
+        // console.log(axios.defaults.headers.common)
         if(query){
             const res = await axios.get(`${import.meta.env.VITE_API_URL}` + `/streamify/videos/allVideos?search=${query}`);
             return res.data
@@ -38,10 +51,12 @@ export const getAllVideos = async (query) => {
     }
 }
 
-export const getUserVideos = async (userId) => {
+export const getUserVideos = async (getToken) => {
 
     try{
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}` + `/streamify/videos/userVideos/${userId}`);
+
+        await setAxiosToken(getToken);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}` + `/streamify/videos/userVideos/`);
 
         // console.log(res.data)
         return res.data.videos
@@ -53,9 +68,11 @@ export const getUserVideos = async (userId) => {
 }
 
 //not ready
-export const deleteVideo = async (videoID) => {
+export const deleteVideo = async (getToken, videoID) => {
 
     try{
+
+        await setAxiosToken(getToken);
         const res = await axios.delete(`${import.meta.env.VITE_API_URL}` + `/streamify/videos/deleteVideo/${videoID}`);
 
         return 1
@@ -66,10 +83,11 @@ export const deleteVideo = async (videoID) => {
     }
 }
 
-export const updateVideo = async (videoId, videoDetails) => {
+export const updateVideo = async (getToken, videoId, videoDetails) => {
 
     try{
 
+        await setAxiosToken(getToken);
         const res = await axios.put(`${import.meta.env.VITE_API_URL}` + "/streamify/videos/updateVideo", {videoID: videoId, updateInfo: videoDetails});
         return true
 

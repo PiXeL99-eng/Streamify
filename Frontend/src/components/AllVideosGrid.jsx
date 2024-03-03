@@ -4,12 +4,14 @@ import { consumeStream } from '../mediaSoupEndPoints'
 import { useNavigate } from "react-router-dom"
 import { getAllVideos } from '../api/videoAPICalls'
 import { useParams } from "react-router-dom"
+import { useAuth } from "@clerk/clerk-react"
 
 const AllVideosGrid = (props) => {
 
     const navigate = useNavigate()
     const [videos, setVideos] = useState([])
     const { query } = useParams();
+    const { getToken } = useAuth()
     
     const playStream = (obj) => {
         
@@ -29,7 +31,7 @@ const AllVideosGrid = (props) => {
 
     useEffect(() => {
 
-        getAllVideos(query).then((data) => {
+        getAllVideos(getToken, query).then((data) => {
             data.reverse()
             setVideos(data)
         })

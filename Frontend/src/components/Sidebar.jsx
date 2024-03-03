@@ -187,7 +187,7 @@ const StartNewStreamModal = (props) => {
 
     const videoDesc = useRef()
     const navigate = useNavigate()
-    const { userId } = useAuth()
+    const { userId, getToken } = useAuth()
     const { user } = useUser()
     const [imageUrl, setImageUrl] = useState("")
 
@@ -206,7 +206,7 @@ const StartNewStreamModal = (props) => {
             authorId: `${userId}`
         }
 
-        const valid = await newVideo(videoDetails)
+        const valid = await newVideo(getToken, videoDetails)
 
         if (valid) {
             props.onClose()
