@@ -5,14 +5,14 @@ import { userSetup } from '../api/userAPICalls'
 
 export const ProtectedRoute = () => {
 
-    const { userId, isLoaded } = useAuth()
+    const { userId, isLoaded, getToken } = useAuth()
 
     // console.log('test', userId)
     useEffect(() => {
 
         if (userId){
 
-            // userSetup()
+            userSetup(getToken)
         }
     }, [userId])
 
