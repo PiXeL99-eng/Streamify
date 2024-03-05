@@ -2,7 +2,11 @@ const Room = require('../lib/Room')
 
 const rooms = new Map()
 
-module.exports = (io, socket, workers) => {
+const getRoom = (id) => {
+    return rooms.get(id)
+}
+
+module.exports = (io, socket) => {
 
     const initiateRoom = (roomId) => {
         socket.join(roomId);
@@ -11,42 +15,53 @@ module.exports = (io, socket, workers) => {
 
     const startStream = async (roomId, callback) => {
         initiateRoom(roomId)
-        const room = await Room.createRouters(roomId, io, workers, socket.id);
+        const room = await Room.createRouters(roomId, io, socket.id);
         rooms.set(roomId,room);
         callback();
     }
 
     const joinRoom = (roomId, callback) => {
         initiateRoom(roomId)
-        rooms.get(roomId).addPeer(socket.id,false);
+        getRoom(roomId).addPeer(socket.id,false);
         callback();
     }
 
     const getRtpCaps = async (callback) => {
-        const room = rooms.get(socket.roomId);
+        const room = getRoom(socket.roomId);
         const rtpCapabilities = room.getRtpCapabilities(socket.id)
         callback({rtpCapabilities});
     }
 
     const createWebRtcTransport = async ({ consumer }, callback) => {
-        const room = rooms.get(socket.roomId);
+        const room = getRoom(socket.roomId);
         await room.createTransport(socket.id, consumer, callback);
     }
 
     const transportConnect = async ({ dtlsParameters }) => {
-        await rooms.get(socket.roomId).transportConnect(socket.id, { dtlsParameters })
+        await getRoom(socket.roomId).transportConnect(socket.id, { dtlsParameters })
     }
 
     const transportProduce = async ({ kind, rtpParameters, appData }, callback) => {
-        await rooms.get(socket.roomId).createProducer(socket.id, kind, rtpParameters, appData, callback);
+        await getRoom(socket.roomId).createProducer(socket.id, kind, rtpParameters, appData, callback);
     }
 
     const consume = async ({ media, rtpCapabilities }, callback) => {
-        await rooms.get(socket.roomId).consume(socket.id, media, rtpCapabilities, callback);
+        await getRoom(socket.roomId).consume(socket.id, media, rtpCapabilities, callback);
     }
 
     const resumeConsumer = async (media) => {
-        await rooms.get(socket.roomId).resumeConsuming(socket.id, media);
+        await getRoom(socket.roomId).resumeConsuming(socket.id, media);
+    }
+
+    const recordEvent = async (record, recordArg) => {
+        const room = getRoom(socket.roomId);
+        const peerId = socket.id;
+        if(record) {
+            await room.startRecord(peerId, recordArg)
+        }
+        else{
+            room.stopRecord(peerId, recordArg)
+        }
     }
 
     const disconnectPeer = () => {
@@ -78,5 +93,8 @@ module.exports = (io, socket, workers) => {
     socket.on('consume', consume)
     socket.on('consumer-resume', resumeConsumer)
 
+    socket.on('record-event', recordEvent)
+
     socket.on('disconnect', disconnectPeer)
+
 }

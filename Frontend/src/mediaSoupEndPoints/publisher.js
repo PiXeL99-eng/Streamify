@@ -4,12 +4,12 @@ import { v4 as uuidv4 } from 'uuid'
 import { deleteVideo } from '../api/videoAPICalls'
 
 let socket = io("ws://localhost:8900/live-video");
-let first = false
 
 let roomId = null;
 let device
 let rtpCapabilities
 let producerTransport
+let streamId
 let mediaSource
 
 // Function to update the viewer count on the page
@@ -46,7 +46,24 @@ let screenAudioParams = { appData: { mediaSource: 'screen-audio' } };
 let camVideoParams = { appData: { mediaSource: 'cam-video' }, ...params }
 let screenVideoParams = { appData: { mediaSource: 'screen-video' }, ...params }
 
+let silentAudioTrack = null;
+
 let recording = false
+
+const getSilentAudioTrack = () => {
+    if(silentAudioTrack === null){
+        const audioContext = new AudioContext();
+        const oscillator = audioContext.createOscillator();
+        oscillator.frequency.value = 0;
+        const streamAudioDestination = audioContext.createMediaStreamDestination();
+        oscillator.connect(streamAudioDestination);
+        oscillator.start();
+
+        // add audio track
+        silentAudioTrack = streamAudioDestination.stream.getAudioTracks()[0];
+    }
+    return silentAudioTrack
+}
 
 const camSuccess = (stream) => {
     const [audioTrack, videoTrack] = stream.getTracks()
@@ -61,7 +78,7 @@ const camSuccess = (stream) => {
  
 const screenSuccess = (stream) => {
     const videoTrack = stream.getVideoTracks()[0]
-    const audioTrack = stream.getAudioTracks()[0] || []
+    const audioTrack = stream.getAudioTracks()[0] || getSilentAudioTrack()
     
     screenShareVideo.srcObject = new MediaStream([videoTrack])
 
@@ -193,9 +210,9 @@ const connectSendTransport = () => {
 }
 
 const handleProducer = async (audioParams, videoParams) => {
-
     const videoProducer = await producerTransport.produce(videoParams);
-    
+    const audioProducer = await producerTransport.produce(audioParams);
+
     videoProducer.on('trackended', () => {
         console.log('video track ended') 
         // close video track
@@ -207,20 +224,16 @@ const handleProducer = async (audioParams, videoParams) => {
         // close video track
     })
 
-    if (audioParams.track.length){
-        const audioProducer = await producerTransport.produce(audioParams);
+    audioProducer.on('trackended', () => {
+        console.log('audio track ended')
+        // close audio track
+    })
 
-        audioProducer.on('trackended', () => {
-            console.log('audio track ended')
-            // close audio track
-        })
-    
-        audioProducer.on('transportclose', () => {
-            console.log('audio transport ended')
-            audioProducer.close()
-            // close audio track
-        })
-    }
+    audioProducer.on('transportclose', () => {
+        console.log('audio transport ended')
+        audioProducer.close()
+        // close audio track
+    })
 }
 
 const generateRoomId = (getStream) => {
@@ -266,19 +279,22 @@ socket.on("viewer-count", (viewers) => {
 })
 
 const startRecording = () => {
-    // todo : send socket event
+    socket.emit("record-event", true, streamId)
+    recording = true;
     startRecordingBtn.disabled = true;
 }
 
 const stopStream = async (streamId) => {
     if (recording) {
-        // send stop recording event and make put request
-        // upon receiving video url after upload
+        socket.emit("record-event", false, (message) => {
+            console.log(message)
+            recording = false
+            stopStreamBtn.disabled = true
+            disconnectPeer()
+        })
     }
     else {
-        socket.disconnect();
-        updateViewerCount(0);
-        producerTransport.close();
+        disconnectPeer()
         roomId = null;
         // deleteVideo(streamId)
 
@@ -292,6 +308,12 @@ const stopStream = async (streamId) => {
     }   
 }
 
+const disconnectPeer = () => {
+    socket.disconnect();
+    updateViewerCount(0);
+    producerTransport.close();
+}
+
 const startCam = () => {
     generateRoomId(getLocalStream);
 }
@@ -301,10 +323,6 @@ const startScreenStream = () => {
 }
 
 const startStream = async () => {
-    if(first){
-        socket = io("ws://localhost:8900/live-video")
-        first = true
-    }
     startCam()
     setTimeout(() => {startScreenStream()}, 3000);
     return roomId;

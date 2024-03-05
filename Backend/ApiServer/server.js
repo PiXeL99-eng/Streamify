@@ -5,6 +5,7 @@ const path = require('path');
 const cors = require('cors');
 const videoRouter = require('./routes/videoRoutes')
 const userRouter = require('./routes/userRoutes')
+const videoEvents = require('./middlewares/videoEvents')
 
 const app = express()
 
@@ -19,12 +20,7 @@ app.use(
   })
 )
 
-// app.use(function(req, res, next) {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header("Access-Control-Allow-Headers", 
-//       "Origin, X-Requested-With, Content-Type, Accept");
-//   next();
-// });
+videoEvents(app)
 
 app.use("/streamify/videos", videoRouter);
 app.use("/streamify/users", userRouter);

@@ -1,64 +1,61 @@
-const config = require('../config/appConfig')
+const { mediaSoupRouters, mediaSoupTransport } = require('../utils/mediaSoupUtils')
+const { getPort, releasePort } = require('../utils/port');
+const FFmpeg = require('./FFmpeg');
 const Peer = require('./Peer')
 
 module.exports = class Room {
 
-    constructor(roomId, io, workers, streamerId, routers) {
+    constructor(roomId, io, streamerId, routers) {
         this.roomId = roomId;
-        this.workers = workers
+        //this.workers = workers
         this.io = io;
         this.peers = new Map();
         this.transports = new Map();
         this.consumers = new Map();
         this.producers = new Map();
         this.routers = routers;
-
+        this.mediaSources = { 
+            'screen' : ['screen-video', 'screen-audio'],
+            'cam' : ['cam-video', 'cam-audio']
+        }
         if (streamerId !== null){
             this.addPeer(streamerId, true);
         }
     }
 
-    getLeastLoadedRouter(){
+    _getLeastLoadedRouter(){
         const routerInfo = this.routers.entries().next().value;
         return routerInfo[0];
     }
 
-    static async createRouters(roomId, io, workers, streamerId){
-        const { mediaCodecs } = config.mediaSoup;
-        const routers = new Map();
-
-        for(let worker of workers){
-            const router = await worker.createRouter({mediaCodecs, })
-            routers.set(router.id,router);
-        }
-        return new Room(roomId, io, workers, streamerId, routers);
+    static async createRouters(roomId, io, streamerId){
+        const routers = await mediaSoupRouters();
+        return new Room(roomId, io, streamerId, routers);
     }
     
     addPeer(peerId, isProducer) {
         const peer = new Peer(isProducer);
-        const routerId = this.getLeastLoadedRouter();
+        const routerId = this._getLeastLoadedRouter();
         peer.setRouter(routerId);
         this.peers.set(peerId, peer);
     }
 
-    getRouter(peerId){ 
+    _getRouter(peerId){ 
         const routerId = this.peers.get(peerId).getRouterId();
         return this.routers.get(routerId);
     }
 
-    getTransport(peerId) {
+    _getTransport(peerId) {
         return this.transports.get(peerId);
     }
 
     getRtpCapabilities(peerId) {
-        return this.getRouter(peerId).rtpCapabilities;
+        return this._getRouter(peerId).rtpCapabilities;
     }
 
     async createTransport(peerId, consumer, cb) {
         try {
-            const { webRtcTransport_options } = config.mediaSoup;
-
-            const transport = await this.getRouter(peerId).createWebRtcTransport(webRtcTransport_options)
+            const transport = await mediaSoupTransport('webRtc', this._getRouter(peerId))
 
             transport.on('dtlsstatechange', dtlsState => {
                 if (dtlsState === 'closed') {
@@ -96,11 +93,11 @@ module.exports = class Room {
     }
 
     async transportConnect(peerId, params){
-        await this.getTransport(peerId).connect(params);
+        await this._getTransport(peerId).connect(params);
     }
 
     async createProducer(peerId, kind, rtpParameters, appData, cb) {
-        const producer = await this.getTransport(peerId).produce({
+        const producer = await this._getTransport(peerId).produce({
             kind,
             rtpParameters,
             appData,
@@ -120,8 +117,8 @@ module.exports = class Room {
     }
 
     async consume(peerId, media, rtpCapabilities, cb) {
-        const consumerTransport = this.getTransport(peerId);
-        const router = this.getRouter(peerId);
+        const consumerTransport = this._getTransport(peerId);
+        const router = this._getRouter(peerId);
         const producer = this.producers.get(media)
         try {
             // check if the router can consume the specified producer
@@ -139,12 +136,12 @@ module.exports = class Room {
                     console.log('transport close from consumer')
                     consumer.close()
                     this.consumers.delete(peerId)
-                    this.updateViewerCount()
+                    this._updateViewerCount()
                 })
         
                 consumer.on('producerclose', () => {
                     this.io.to(peerId).emit("producer-closed");
-                    this.removeConnections(peerId);
+                    this._removeConnections(peerId);
                 })
         
                 const params = {
@@ -162,7 +159,7 @@ module.exports = class Room {
                 }
                 else {
                     this.consumers.set(peerId, new Map([[media,consumer]]) );
-                    this.updateViewerCount()
+                    this._updateViewerCount()
                 }
             }
         } catch (error) {
@@ -180,8 +177,88 @@ module.exports = class Room {
         await consumer.resume();
     }
 
-    removeConnections(peerId) {
-        const transport = this.getTransport(peerId);
+    async _publishProducerRtpStream(router, producer, peer){
+        const rtpTransport = await mediaSoupTransport('plain', router);
+
+        let remoteRtcpPort;
+        const remoteRtpPort = await getPort();
+        peer.addRemoteRtpPort(remoteRtpPort)
+
+        await rtpTransport.connect({
+            ip: '127.0.0.1',
+            port: remoteRtpPort,
+            rtcpPort: remoteRtcpPort
+        });
+        
+        const codecs = [];
+        // Codec passed to the RTP Consumer must match the codec in the Mediasoup router rtpCapabilities
+        const routerCodec = router.rtpCapabilities.codecs.find(
+            codec => codec.kind === producer.kind
+        );
+        codecs.push(routerCodec);
+
+        const rtpCapabilities = {
+            codecs,
+            rtcpFeedback: []
+        };
+
+        // Once the ffmpeg process is ready to consume resume and send a keyframe
+        const rtpConsumer = await rtpTransport.consume({
+            producerId: producer.id,
+            rtpCapabilities,
+            paused: true
+        });
+        peer.addRtpConsumer(rtpConsumer)
+
+        return {
+            remoteRtpPort,
+            remoteRtcpPort,
+            rtpCapabilities,
+            rtpParameters: rtpConsumer.rtpParameters
+        };
+    }
+
+    async startRecord(peerId, streamId) {
+        let recordInfo = {
+            'screen': {}, 
+            'cam' : {}, 
+        };
+    
+        const router = this._getRouter(peerId)
+        const streamer = this.peers.get(peerId)
+
+        for(let media in this.mediaSources){
+            for(let mediaType of this.mediaSources[media]) {
+                const producer = this.producers.get(mediaType);
+                recordInfo[media][producer.kind] = await this._publishProducerRtpStream(router, producer, streamer);
+            }
+            recordInfo[media].fileName = Date.now().toString(); 
+        }
+        streamer.process = new FFmpeg(recordInfo, streamId)
+        
+        setTimeout(async () => {
+            for (const consumer of streamer.getRtpConsumers()) {
+              await consumer.resume();
+              await consumer.requestKeyFrame();
+            }
+        }, 1000);
+
+    }
+
+    stopRecord(peerId, cb) {
+        const streamer = this.peers.get(peerId);
+        streamer.process.kill();
+        streamer.process = undefined;
+
+        for(const remotePort of streamer.getRemoteRtpPorts()){
+            releasePort(remotePort);
+        }
+
+        cb("Recording completed successfully")
+    }
+
+    _removeConnections(peerId) {
+        const transport = this._getTransport(peerId);
         // close the peer transport
         transport.close()
         this.transports.delete(peerId)
@@ -192,11 +269,11 @@ module.exports = class Room {
 
     disconnectPeer(peerId) {
         const isConsumer = this.consumers.has(peerId);
-        this.removeConnections(peerId);
+        this._removeConnections(peerId);
         return !isConsumer;
     }
 
-    updateViewerCount() {
+    _updateViewerCount() {
         this.io.to(this.roomId).emit("viewer-count",this.consumers.size)
     }
 } 

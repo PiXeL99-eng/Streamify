@@ -1,8 +1,9 @@
 const mediasoup = require('mediasoup');
 const config = require('../config/appConfig')
 
+const workers = [];
+
 const createWorkers = async () => {
-    const workers = [];
 
     const { numWorkers, rtcMinPort, rtcMaxPort } = config.mediaSoup;
 
@@ -20,8 +21,32 @@ const createWorkers = async () => {
             setTimeout(() => process.exit(1), 2000); // exit in 2 seconds
         });
     }
-
-    return workers;
 };
 
-module.exports = { createWorkers };
+const mediaSoupRouters = async () => {
+    const { mediaCodecs } = config.mediaSoup;
+    const routers = new Map();
+
+    for(let worker of workers){
+        const router = await worker.createRouter({mediaCodecs, })
+        routers.set(router.id,router);
+    }
+    return routers;
+}
+
+const mediaSoupTransport= async (transportType, router) => {
+    const { webRtcTransport_options, plainRtpTransport_options } = config.mediaSoup;
+
+    switch (transportType) {
+      case 'webRtc':
+        return await router.createWebRtcTransport(webRtcTransport_options);
+      case 'plain':
+        return await router.createPlainTransport(plainRtpTransport_options);
+    }
+}
+
+module.exports = { 
+    createWorkers,
+    mediaSoupRouters,
+    mediaSoupTransport
+};

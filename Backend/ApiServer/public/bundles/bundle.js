@@ -4,7 +4,7 @@ const videoGallery = document.getElementById('videoGallery');
 // Function to fetch video data from the backend
 const fetchVideos = async () => {
     try {
-        const response = await fetch('streamify/allvideos');
+        const response = await fetch('streamify/videos/allvideos');
         const userVideos = await response.json();
         console.log(userVideos)
         // Display video boxes in the gallery

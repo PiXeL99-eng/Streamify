@@ -1,6 +1,10 @@
 {
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2",
+    "axios": "^1.6.7",
     "dotenv": "^16.4.1",
+    "firebase-admin": "^12.0.0",
     "mediasoup": "^3.13.17",
     "socket.io": "^4.7.4"
   },
@@ -10,7 +14,6 @@
   "directories": {
     "lib": "lib"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node socket.js",

@@ -4,7 +4,7 @@ const { getAllVideos, pastStreams, newStream, updateStream, deleteVideo } = requ
 const { authenticateRequest } = require('../middlewares/authMiddleware') 
 const router = express.Router();
 
-router.use(authenticateRequest)
+//router.use(authenticateRequest)
 
 router.get("/allVideos", getAllVideos)
 router.get("/userVideos", pastStreams)

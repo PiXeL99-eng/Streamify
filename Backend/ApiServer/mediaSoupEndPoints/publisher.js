@@ -1,7 +1,6 @@
 const io = require('socket.io-client')
 const mediasoupClient = require('mediasoup-client')
 const { v4: uuidv4 } = require('uuid');
-const { Transport } = require('mediasoup-client/lib/types');
 
 const socket = io("ws://localhost:8900/live-video")
 
@@ -46,7 +45,24 @@ let screenAudioParams = { appData: { mediaSource: 'screen-audio' } };
 let camVideoParams = { appData: { mediaSource: 'cam-video' }, ...params }
 let screenVideoParams = { appData: { mediaSource: 'screen-video' }, ...params }
 
+let silentAudioTrack = null;
+
 let recording = false
+
+const getSilentAudioTrack = () => {
+    if(silentAudioTrack === null){
+        const audioContext = new AudioContext();
+        const oscillator = audioContext.createOscillator();
+        oscillator.frequency.value = 0;
+        const streamAudioDestination = audioContext.createMediaStreamDestination();
+        oscillator.connect(streamAudioDestination);
+        oscillator.start();
+
+        // add audio track
+        silentAudioTrack = streamAudioDestination.stream.getAudioTracks()[0];
+    }
+    return silentAudioTrack
+}
 
 const camSuccess = (stream) => {
     const [audioTrack, videoTrack] = stream.getTracks()
@@ -61,7 +77,7 @@ const camSuccess = (stream) => {
  
 const screenSuccess = (stream) => {
     const videoTrack = stream.getVideoTracks()[0]
-    const audioTrack = stream.getAudioTracks()[0] || []
+    const audioTrack = stream.getAudioTracks()[0] || getSilentAudioTrack()
     
     screenShareVideo.srcObject = new MediaStream([videoTrack])
 
@@ -194,7 +210,8 @@ const connectSendTransport = () => {
 
 const handleProducer = async (audioParams, videoParams) => {
     const videoProducer = await producerTransport.produce(videoParams);
-    
+    const audioProducer = await producerTransport.produce(audioParams);
+
     videoProducer.on('trackended', () => {
         console.log('video track ended') 
         // close video track
@@ -206,20 +223,16 @@ const handleProducer = async (audioParams, videoParams) => {
         // close video track
     })
 
-    if (audioParams.track.length){
-        const audioProducer = await producerTransport.produce(audioParams);
+    audioProducer.on('trackended', () => {
+        console.log('audio track ended')
+        // close audio track
+    })
 
-        audioProducer.on('trackended', () => {
-            console.log('audio track ended')
-            // close audio track
-        })
-    
-        audioProducer.on('transportclose', () => {
-            console.log('audio transport ended')
-            audioProducer.close()
-            // close audio track
-        })
-    }
+    audioProducer.on('transportclose', () => {
+        console.log('audio transport ended')
+        audioProducer.close()
+        // close audio track
+    })
 }
 
 const generateRoomId = (getStream) => {
@@ -237,7 +250,7 @@ const generateRoomId = (getStream) => {
         });
         console.log(`Streaming started in room: ${roomId}`);
         
-        fetch("streamify/newVideo",{
+        fetch("streamify/videos/newVideo",{
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -264,26 +277,39 @@ socket.on("viewer-count", (viewers) => {
 })
 
 const startRecording = () => {
-    // todo : send socket event
+    socket.emit("record-event", true, streamId)
+    recording = true;
     startRecordingBtn.disabled = true;
 }
 
-const stopStream = async () => {
+const stopStream = () => {
     if (recording) {
-        // send stop recording event and make put request
-        // upon receiving video url after upload
+        socket.emit("record-event", false, (message) => {
+            console.log(message)
+            recording = false
+            stopStreamBtn.disabled = true
+            disconnectPeer()
+        })
     }
     else {
-        socket.disconnect();
-        updateViewerCount(0);
-        producerTransport.close();
-        await fetch(`streamify/deleteVideo/${streamId}`,{
+        fetch(`streamify/videos/deleteVideo/${streamId}`,{
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
             },
         })
+        .then(() => {
+            console.log("Stream ended from db")
+            disconnectPeer()
+        })
+        .catch(err => console.log("Error occured -", err))
     }   
+}
+
+const disconnectPeer = () => {
+    socket.disconnect();
+    updateViewerCount(0);
+    producerTransport.close();
 }
 
 const startCam = () => {

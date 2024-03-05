@@ -89,14 +89,6 @@ const newStream = async (req, res) => {
 
 const updateStream = async (req, res) => {
     try{
-        // updateInfo should be a object in the frontend APi call
-        // body : {
-        //     videoID : "...",
-        //     updateInfo : {
-        //         videoDesc : "...",
-        //         videoUrl : "...",
-        //     }
-        // }
         const { videoID, updateInfo } = req.body;
         const decryptedVideoID = decrypt(videoID);
         await prisma.video.update({
