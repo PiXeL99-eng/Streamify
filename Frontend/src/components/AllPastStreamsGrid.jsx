@@ -81,12 +81,12 @@ const AllPastStreamsGrid = (props) => {
                 <SimpleGrid columns={{ sm: 2, md: 4 }} spacing='40px'>
 
                     {
-                        videos.map((obj, key) => {
+                        videos.map((obj) => {
 
                             return (
 
                                 <Box _hover={{ cursor: "pointer", boxShadow: "2px 3px 5px 2px #050505", borderRadius: "6px" }}
-                                    position={"relative"}
+                                    position={"relative"} key={obj.videoId}
                                 >
                                     {modalId === obj.videoId ?
 

@@ -54,11 +54,11 @@ const AllVideosGrid = (props) => {
                 <SimpleGrid columns={{ sm: 2, md: 4 }} spacing='40px'>
 
                     {
-                        videos.map((obj, key) => {
+                        videos.map((obj, i) => {
 
                             return (
 
-                                <Box _hover={{cursor: "pointer", boxShadow: "2px 3px 5px 2px #050505", borderRadius: "6px"}} onClick={() => playStream(obj)}>
+                                <Box key={i} _hover={{cursor: "pointer", boxShadow: "2px 3px 5px 2px #050505", borderRadius: "6px"}} onClick={() => playStream(obj)}>
                                     <Card background={"transparent"}>
                                         <CardBody padding={"2"}>
                                             <Image

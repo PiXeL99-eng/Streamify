@@ -20,10 +20,7 @@ export const userSetup = async (getToken) => {
 
         // console.log(res.data)
 
-        return true
-
     } catch(err){
         console.log(err)
-        return false
     }
 }
