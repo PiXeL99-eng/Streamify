@@ -39,7 +39,7 @@ const pastStreams = async (req, res) => {
                 videos : {
                     // Filter for non-live videos
                     where : { 
-                        live : true 
+                        live : false 
                     }, 
                     select : { 
                         videoId: true,
